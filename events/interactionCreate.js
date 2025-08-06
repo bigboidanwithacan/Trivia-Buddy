@@ -1,5 +1,8 @@
 import { Collection, Events, MessageFlags } from "discord.js";
 import { logger, Chalk } from "../utility/logger.js";
+import { loadConfig } from "../utility/configLoader.js";
+
+const config = await loadConfig();
 
 const logChalk = new Chalk();
 
@@ -45,6 +48,16 @@ export async function execute(interaction){
 
 		timestamps.set(interaction.user.id, now);
 		setTimeout( () => timestamps.delete(interaction.user.id), cooldownAmount);
+
+		// only i (my main account) am allowed to reload commands
+			if (commandName === 'reload') {
+				if (interaction.user.id != config.myUserId) {
+					return interaction.reply({
+						content: 'Sorry you are not authorized to use this command!',
+						flags: MessageFlags.Ephemeral,
+					});
+				}
+			}
 
 		try {
 			await command.execute(interaction);

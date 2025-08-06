@@ -8,4 +8,5 @@ export default {
 	token: "",
 	clientId: "",
 	guildIds: [""],
+	myUserId: "",
 };
