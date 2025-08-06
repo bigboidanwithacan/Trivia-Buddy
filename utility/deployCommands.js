@@ -36,8 +36,7 @@ const rest = new REST().setToken(config.token);
 (async () => {
 	try{
 		logChalk.info(`Started refreshing ${commands.length} application (/) commands.`);
-
-		console.log(commands);
+		
 		// This is for individual discord servers, comment this out and uncomment the code below for global deployment
 		for (const guildId of config.guildIds) {
 			const data = await rest.put(
