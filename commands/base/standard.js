@@ -1,6 +1,8 @@
 import { ButtonBuilder, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ComponentType, MessageFlags } from "discord.js";
 import { Chalk } from "./../../utility/logger.js";
 const logChalk = new Chalk();
+import timers, { setInterval } from 'node:timers/promises';
+const wait = timers.setTimeout;
 
 export const data = new SlashCommandBuilder()
 	.setName('standard')
@@ -48,11 +50,11 @@ export async function execute(interaction) {
 		'Easy does it! You\'re already part of the game. Let the fun begin! 🎮',
 		'Double join? You\'re eager — we love that! But one join is all you need. 😄',
 	]
-	const joinFilter = buttonInteraction => {
+	const joinFilter = async (buttonInteraction) => {
 		if (!(players.includes(buttonInteraction.user.id))){
 			return true;
 		}
-		buttonInteraction.reply({
+		await buttonInteraction.reply({
 			content: joinedMessages[Math.round(Math.random()*joinedMessages.length)],
 			flags: MessageFlags.Ephemeral,
 		})
@@ -64,32 +66,43 @@ export async function execute(interaction) {
 		time: 30_000,
 	});
 
-	joinButtonCollector.on('collect', buttonInteraction => {
+	joinButtonCollector.on('collect', async (buttonInteraction)=> {
 		players.push(buttonInteraction.user.id);
-		buttonInteraction.reply({
+		await buttonInteraction.reply({
 			content: 'You have joined the game!',
 			flags: MessageFlags.Ephemeral,
 		})
 	});
 
-	joinButtonCollector.on('end', buttonInteraction => {
-		console.error(buttonInteraction);
-		logChalk.error(buttonInteraction);
-		buttonInteraction.reply('Game is starting!');
-		setTimeout(() => buttonInteraction.deleteReply(), 5_000);
+	joinButtonCollector.on('end', async responsesCollection => {
+		const message = await interaction.channel.send('Game is starting!');
+		
+		setTimeout(() => message.delete(), 5_000);
 	})
 
-
+	await wait(30_500);
+	// logChalk.info(players);
 	let counter = 1;
+
+	// for loop below will be the whole of the quiz, each loop will be a question
 	for (const fullQuestion of results ) {
 		const { type, difficulty, category, question, correct_answer, incorrect_answers } = fullQuestion;
 		const embed = new EmbedBuilder()
 			.setTitle(`Question ${counter}`)
+			.setFooter({ text: 'Questions from the opentdb', iconURL: 'https://opentdb.com/images/logo.png' })
 			.setImage('https://opentdb.com/images/logo.png');
 
-		await interaction.channel.send({ embeds: [embed] });
-
+			// add buttons for answers and link it to this message
+		const message = await interaction.channel.send({ embeds: [embed] });
 		counter++;
+
+		setTimeout(() => {
+			const rightAnswerFilter = buttonInteraction => {
+				// something to collect the right answer
+			}
+			// used to find the real answer
+			const answerFilter = message.createMessageComponentCollector();
+		},20_000);
 	}
 
 

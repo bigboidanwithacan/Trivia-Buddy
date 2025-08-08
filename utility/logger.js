@@ -16,19 +16,19 @@ function timestamp() {
 export class Chalk {
 
 	info(msg) {
-		console.log(chalk.blue(`[INFO] [${timestamp()}] ${msg}`));
+		console.log(chalk.blue(`[INFO] [${timestamp()}]`), msg);
 	}
 
 	warn(msg) {
-		console.warn(chalk.yellow(`[WARN] [${timestamp()}] ${msg}`));	
+		console.warn(chalk.yellow(`[WARN] [${timestamp()}]`), msg);	
 	}
 
 	error(msg) {
-		(msg) => console.error(chalk.red(`[ERROR] [${timestamp()}] ${msg}`));
+		(msg) => console.error(chalk.red(`[ERROR] [${timestamp()}]`), msg);
 	}
 
 	debug(msg) {
-		(msg) => console.debug(chalk.gray(`[DEBUG] [${timestamp()}] ${msg}`));
+		(msg) => console.debug(chalk.gray(`[DEBUG] [${timestamp()}]`), msg);
 	}
 }
 
