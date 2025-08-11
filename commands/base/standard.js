@@ -89,7 +89,7 @@ export async function execute(interaction) {
 		const { type, difficulty, category, question, correct_answer, incorrect_answers } = fullQuestion;
 		const embed = new EmbedBuilder()
 			.setTitle(`Question ${counter}`)
-			.setFooter({ text: 'Questions from the opentdb', iconURL: 'https://opentdb.com/images/logo.png' })
+			.setFooter({ text: 'Questions from the open trivia database', iconURL: 'https://opentdb.com/images/logo.png' })
 			.setImage('https://opentdb.com/images/logo.png');
 
 			// add buttons for answers and link it to this message
