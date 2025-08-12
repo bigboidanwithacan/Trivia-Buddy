@@ -44,8 +44,8 @@ export async function execute(interaction) {
 	let players = [interaction.user.id];
 	const joinedMessages = [
 		'You\'re all set! 🎉 No need to click \'Join\' again — you\'re already in the game and ready to roll!',
-		'You\'re in! 🕹️ No need to hit \'Join\' again — just sit tight, the game’s about to begin!',
-		'Already joined — we’re just as excited as you are! 😄',
+		'You\'re in! 🕹️ No need to hit \'Join\' again — just sit tight, the game\'s about to begin!',
+		'Already joined — we\'re just as excited as you are! 😄',
 		'Hold tight! You\'ve already joined the game. One click is all it takes! 🚀',
 		'Easy does it! You\'re already part of the game. Let the fun begin! 🎮',
 		'Double join? You\'re eager — we love that! But one join is all you need. 😄',
@@ -58,6 +58,7 @@ export async function execute(interaction) {
 			content: joinedMessages[Math.round(Math.random()*joinedMessages.length)],
 			flags: MessageFlags.Ephemeral,
 		})
+		return false;
 	};
 
 	const joinButtonCollector = joinMessage.createMessageComponentCollector({
@@ -76,33 +77,63 @@ export async function execute(interaction) {
 
 	joinButtonCollector.on('end', async responsesCollection => {
 		const message = await interaction.channel.send('Game is starting!');
-		
 		setTimeout(() => message.delete(), 5_000);
 	})
 
 	await wait(30_500);
-	// logChalk.info(players);
-	let counter = 1;
+	let questionCounter = 1;
 
 	// for loop below will be the whole of the quiz, each loop will be a question
-	for (const fullQuestion of results ) {
-		const { type, difficulty, category, question, correct_answer, incorrect_answers } = fullQuestion;
+	for (const singleQuestion of results ) {
+		const { type, difficulty, category, question, correct_answer, incorrect_answers } = singleQuestion;
 		const embed = new EmbedBuilder()
-			.setTitle(`Question ${counter}`)
+			.setTitle(`Question ${questionCounter}`)
 			.setFooter({ text: 'Questions from the open trivia database', iconURL: 'https://opentdb.com/images/logo.png' })
-			.setImage('https://opentdb.com/images/logo.png');
+			.setImage('https://opentdb.com/images/logo.png')
+			.setColor(0xa6aeb8)
+			.addFields(
+				{ name:'Type', value: type, inline: true},
+				{ name: 'Difficulty', value: difficulty, inline: true},
+				{ name: 'Category', value: category, inline: true},
+				{ name: 'Question', value: question},
+			)
+
+		const correctButton = new ButtonBuilder()
+			.setCustomId('correct')
+			.setLabel(correct_answer)
+			.setStyle(ButtonStyle.Primary);
+
+		let buttonArray = [];
+		let corAnsIndex = Math.floor(Math.random() * incorrect_answers.length) + 1;
+		let indexCounter = 1;
+		for (const answer of incorrect_answers) {
+			if (indexCounter === corAnsIndex) {
+				buttonArray.push(correctButton);
+			}
+			const wrongButton = new ButtonBuilder()
+				.setCustomId(`wrong${indexCounter}`)
+				.setLabel(answer)
+				.setStyle(ButtonStyle.Primary);
+			
+			buttonArray.push(wrongButton);
+			indexCounter++;
+		}
+
+		const row = new ActionRowBuilder();
+		for (const answer of buttonArray){
+			row.addComponents(answer);
+		}
 
 			// add buttons for answers and link it to this message
-		const message = await interaction.channel.send({ embeds: [embed] });
-		counter++;
-
-		setTimeout(() => {
-			const rightAnswerFilter = buttonInteraction => {
-				// something to collect the right answer
-			}
-			// used to find the real answer
-			const answerFilter = message.createMessageComponentCollector();
-		},20_000);
+		const message = await interaction.channel.send({ embeds: [embed], components: [row] });
+		questionCounter++;
+		let answerFound = false;
+		// const rightAnswerFilter = buttonInteraction => {
+		// 	// something to collect the right answer
+			
+		// }
+		// used to find the real answer
+		const answerCollector = message.createMessageComponentCollector();
 	}
 
 
