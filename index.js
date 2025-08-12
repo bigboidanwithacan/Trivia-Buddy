@@ -58,4 +58,16 @@ process.on('unhandledRejection', error => {
 	logger.error('Unhandled promise rejection', error);
 });
 
+// process.on('exit', testObject => {
+// 	console.log(testObject);
+// 	console.log('goodbye exit');
+// });
+
+// process.on('SIGINT', testObject => {
+// 	console.log(testObject);
+// 	console.log('goodbye SIGINT');
+// 	// if i do have a file where i store the session token for the standard base command then i want to delete it here
+// 	process.exit();
+// });
+
 client.login(config.token);
