@@ -20,15 +20,15 @@ export class Chalk {
 	}
 
 	warn(msg) {
-		console.warn(chalk.yellow(`[WARN] [${timestamp()}]`), msg);	
+		console.warn(chalk.yellow(`[WARN] [${timestamp()}]`), msg);
 	}
 
 	error(msg) {
-		(msg) => console.error(chalk.red(`[ERROR] [${timestamp()}]`), msg);
+		console.error(chalk.red(`[ERROR] [${timestamp()}]`), msg);
 	}
 
 	debug(msg) {
-		(msg) => console.debug(chalk.gray(`[DEBUG] [${timestamp()}]`), msg);
+		console.debug(chalk.gray(`[DEBUG] [${timestamp()}]`), msg);
 	}
 }
 

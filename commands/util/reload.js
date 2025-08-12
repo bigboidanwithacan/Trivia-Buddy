@@ -1,8 +1,8 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder } from 'discord.js';
 import path from 'path';
-import { pathToFileURL, fileURLToPath } from "url";
-import {readdirSync, existsSync} from 'fs';
-import { logger } from "../../utility/logger.js";
+import { pathToFileURL, fileURLToPath } from 'url';
+import { readdirSync, existsSync } from 'fs';
+import { logger } from '../../utility/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 export const data = new SlashCommandBuilder()
 	.setName('reload')
 	.setDescription('This command reloads other commands passed as an option.')
-	.addStringOption(option => 
+	.addStringOption(option =>
 		option.setName('command')
 			.setDescription('The command that is to be reloaded')
 			.setRequired(true),
@@ -21,7 +21,7 @@ export async function execute(interaction) {
 	const commandName = interaction.options.getString('command', required).toLowerCase();
 	const command = interaction.client.commands.get(commandName);
 
-	if (!command){
+	if (!command) {
 		return interaction.reply(`There is no command with the name \`${commandName}\`!`);
 	}
 
@@ -37,9 +37,9 @@ export async function execute(interaction) {
 				correctFolder = folder;
 				break;
 			}
-				
+
 		}
-		const commandPath = path.join(correctFolderPath, correctFolder,`${commandName}.js`);
+		const commandPath = path.join(correctFolderPath, correctFolder, `${commandName}.js`);
 		 // Convert to a file URL and add a query to bypass the cache
 		const commandUrl = `${pathToFileURL(commandPath).href}?update=${Date.now()}`;
 
@@ -53,6 +53,6 @@ export async function execute(interaction) {
 	catch (error) {
 		console.error(error);
 		logger.error(error);
-		await interaction.reply(`There was an error while reloading command \`${commandName}\`:\n\`${error.message}\``)
+		await interaction.reply(`There was an error while reloading command \`${commandName}\`:\n\`${error.message}\``);
 	}
 }

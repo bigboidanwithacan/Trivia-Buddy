@@ -5,8 +5,8 @@
 */
 
 export default {
-	token: "",
-	clientId: "",
-	guildIds: [""],
-	myUserId: "",
+	token: '',
+	clientId: '',
+	guildIds: [''],
+	myUserId: '',
 };

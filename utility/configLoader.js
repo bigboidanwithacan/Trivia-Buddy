@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 export async function loadConfig() {
 	const configPath = process.env.CONFIG_PATH || path.join(__dirname, '..', 'config.js');
 
-	if (!fs.existsSync(configPath)){
+	if (!fs.existsSync(configPath)) {
 		throw new Error(`Config file not found at path: ${configPath}`);
 	}
 

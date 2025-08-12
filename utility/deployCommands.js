@@ -1,9 +1,9 @@
-import { REST, Routes } from "discord.js";
-import { loadConfig } from "./configLoader.js";
-import path from "path";
-import { fileURLToPath, pathToFileURL } from "url";
+import { REST, Routes } from 'discord.js';
+import { loadConfig } from './configLoader.js';
+import path from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
 import fs from 'fs';
-import { Chalk, logger } from './logger.js' 
+import { Chalk, logger } from './logger.js';
 
 const logChalk = new Chalk();
 
@@ -24,7 +24,8 @@ for (const folder of commandsFolder) {
 		const command = { ...commandModule };
 		if ('data' in command && 'execute' in command) {
 			commands.push(command.data.toJSON());
-		}else{
+		}
+		else {
 			logChalk.warn(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
 			logger.warn(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
 		}
@@ -34,16 +35,16 @@ for (const folder of commandsFolder) {
 const rest = new REST().setToken(config.token);
 
 (async () => {
-	try{
+	try {
 		logChalk.info(`Started refreshing ${commands.length} application (/) commands.`);
-		
+
 		// This is for individual discord servers, comment this out and uncomment the code below for global deployment
 		for (const guildId of config.guildIds) {
 			const data = await rest.put(
 				Routes.applicationGuildCommands(config.clientId, guildId),
 				{
 					body: commands,
-				}
+				},
 			);
 			logChalk.info(`Successfully reloaded ${data.length} application (/) commands in the guild: ${guildId}.`);
 		}
@@ -57,7 +58,7 @@ const rest = new REST().setToken(config.token);
 		// logChalk.info(`Successfully reloaded ${data.length} application (/) commands.`);
 
 	}
-	catch(error){
+	catch (error) {
 		console.error(error);
 		logChalk.error(error);
 	}

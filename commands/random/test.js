@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ContainerBuilder, UserSelectMenuBuilder, ButtonStyle, MessageFlags, ComponentType } from "discord.js";
+import { SlashCommandBuilder, ContainerBuilder, UserSelectMenuBuilder, ButtonStyle, MessageFlags, ComponentType } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
 	.setName('test')
