@@ -56,6 +56,7 @@ for (const file of eventsFolder) {
 process.on('unhandledRejection', error => {
 	logChalk.error('Unhandled promise rejection', error);
 	logger.error('Unhandled promise rejection', error);
+	console.log(error);
 });
 
 // process.on('exit', testObject => {

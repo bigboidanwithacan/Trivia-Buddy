@@ -1,3 +1,19 @@
+/*
+// MADE GOOD PROGRESS SO FAR
+// 	TO-DO
+//		SHOW POINT IN THE MIDDLE OF ROUNDS
+// 		ADD OPTIONS TO QUIZZES
+//		(IMPORTANT) HAVE THE QUESTIONS WAIT FOR COMPLETION
+// 			ADD A TIMER TO SEE HOW LONG LEFT FOR EACH QUESTION
+//		USE SESSION TOKENS TO NOT REUSE QUESTION ON ACCIDENT
+//			SHOULD BE DELETED OR RESET AFTER 6 HOURS
+//			FILE USED TO STORE IT SHOULD BE DELETED AT THE END OF THE PROCESS (SIGINT, EXIT, SIGTERM)
+// 		PAUSE GAME
+//			IN CONJUNCTION WITH SHOW POINTS IN THE MIDDLE OF ROUNDS, AND EXIT GAME DUE TO USE OF SPECIAL CHARACTER COMMAND(i.e !show_points, !pause, !exit)
+//		END GAME PREMATURELY
+//			IN CONJUNCTION WITH SHOW POINTS IN THE MIDDLE OF ROUNDS, AND PAUSE GAME DUE TO USE OF SPECIAL CHARACTER COMMAND(i.e !show_points, !pause, !exit)
+*/
+
 import { ButtonBuilder, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ComponentType, MessageFlags } from 'discord.js';
 // import { Chalk } from './../../utility/logger.js';
 // const logChalk = new Chalk();
@@ -5,13 +21,22 @@ import timers from 'node:timers/promises';
 const wait = timers.setTimeout;
 import { decode } from 'html-entities';
 
+const DifficultyMultiplier = {
+	easy: 	1,
+	medium: 2,
+	hard: 	3,
+};
+
+// sum i wanted to try here
+Object.freeze(DifficultyMultiplier);
+
 export const data = new SlashCommandBuilder()
 	.setName('standard')
 	.setDescription('The standard trivia game. Can choose your own options.');
 
 export async function execute(interaction) {
 	await interaction.deferReply();
-	const apiUrl = 'https://opentdb.com/api.php?amount=2';
+	const apiUrl = 'https://opentdb.com/api.php?amount=2&difficulty=easy';
 	const response = await fetch(apiUrl);
 	const json = await response.json();
 
@@ -42,7 +67,10 @@ export async function execute(interaction) {
 		components: [joinRow],
 	});
 
-	const players = [interaction.user.id];
+	// this will be used to keep track of everything that a player needs to have
+	const players = new Map();
+	players.set(interaction.user.id, { points: 0, answer: null });
+
 	const joinedMessages = [
 		'You\'re all set! 🎉 No need to click \'Join\' again — you\'re already in the game and ready to roll!',
 		'You\'re in! 🕹️ No need to hit \'Join\' again — just sit tight, the game\'s about to begin!',
@@ -52,7 +80,7 @@ export async function execute(interaction) {
 		'Double join? You\'re eager — we love that! But one join is all you need. 😄',
 	];
 	const joinFilter = async (buttonInteraction) => {
-		if (!(players.includes(buttonInteraction.user.id))) {
+		if (!(players.has(buttonInteraction.user.id))) {
 			return true;
 		}
 		await buttonInteraction.reply({
@@ -69,7 +97,7 @@ export async function execute(interaction) {
 	});
 
 	joinButtonCollector.on('collect', async (buttonInteraction) => {
-		players.push(buttonInteraction.user.id);
+		players.set(buttonInteraction.user.id, { points: 0, answer: null });
 		await buttonInteraction.reply({
 			content: 'You have joined the game!',
 			flags: MessageFlags.Ephemeral,
@@ -93,15 +121,15 @@ export async function execute(interaction) {
 			.setImage('https://opentdb.com/images/logo.png')
 			.setColor(0xa6aeb8)
 			.addFields(
-				{ name:'Type', value: type, inline: true },
-				{ name: 'Difficulty', value: difficulty, inline: true },
-				{ name: 'Category', value: category, inline: true },
-				{ name: 'Question', value: decode(question) },
+				{ name:'Type', 			value: decode(type), 		inline: true },
+				{ name:'Difficulty', 	value: decode(difficulty), 	inline: true },
+				{ name:'Category', 	value: decode(category), 	inline: true },
+				{ name:'Question', 	value: decode(question) },
 			);
 
 		const correctButton = new ButtonBuilder()
 			.setCustomId('correct')
-			.setLabel(correct_answer)
+			.setLabel(decode(correct_answer))
 			.setStyle(ButtonStyle.Primary);
 
 		const buttonArray = [];
@@ -113,7 +141,7 @@ export async function execute(interaction) {
 			}
 			const wrongButton = new ButtonBuilder()
 				.setCustomId(`wrong${indexCounter}`)
-				.setLabel(answer)
+				.setLabel(decode(answer))
 				.setStyle(ButtonStyle.Primary);
 
 			buttonArray.push(wrongButton);
@@ -129,19 +157,39 @@ export async function execute(interaction) {
 		const message = await interaction.channel.send({ embeds: [embed], components: [row] });
 		questionCounter++;
 		// let answerFound = false;
+
 		const rightAnswerFilter = async (buttonInteraction) => {
-
-			const gaveAnswerBefore = (id) => id === buttonInteraction.user.id;
-
-			if (players.some(gaveAnswerBefore)) {
-				await interaction.channel.send({
+			// console.log(buttonInteraction.message.components[0].components.find(btn => btn.data.custom_id === 'correct')); 		// this is for finding the button that has the correct answer
+			console.log(buttonInteraction.customId);
+			if (players.get(buttonInteraction.user.id).answer) {
+				await buttonInteraction.reply({
 					content: 'You have already chosen an answer!',
 					flags: MessageFlags.Ephemeral,
 				});
+				return;
 			}
-			// something to collect the right answer
-
+			const chosenButton = buttonInteraction.message.components[0].components.find(btn => btn.data.custom_id === buttonInteraction.customId);
+			players.get(buttonInteraction.user.id).answer = chosenButton;
+			if (buttonInteraction.customId === 'correct') {
+				const newRow = new ActionRowBuilder();
+				for (const button of buttonInteraction.message.components[0].components) {
+					const tempButton = new ButtonBuilder(button.toJSON())
+						.setDisabled(true);
+					newRow.addComponents(tempButton);
+				}
+				message.edit({ embeds: [embed], components: [newRow] });
+				await buttonInteraction.reply(`${buttonInteraction.user} got the correct answer!`);
+				players.get(buttonInteraction.user.id).points += 1 * DifficultyMultiplier[difficulty];
+				await buttonInteraction.channel.send(`${buttonInteraction.user}'s points: ${players.get(buttonInteraction.user.id).points}`);
+			}
+			else {
+				buttonInteraction.reply({
+					content: 'You have chosen the wrong answer <:sab:1401562453992538172>',
+					flags: MessageFlags.Ephemeral,
+				});
+			}
 		};
+
 		// used to find the real answer
 		const answerCollector = message.createMessageComponentCollector({
 			filter: rightAnswerFilter,
@@ -153,7 +201,24 @@ export async function execute(interaction) {
 			// do something on right answer being chosen, code below just for eslint
 			buttonInteraction.user.id;
 		});
+
+		for (const player of players.values()) {
+			console.log(player);
+			player.answer = null;
+		}
 	}
 
+	await wait(20_000);
+
+	// can be multiple winners as long as they all have the same amount of points
+	const winnerPoints = Math.max(...Array.from(players.values(), player => player.points));
+	const winners = [];
+	for (const [id, playerData] of players.entries()) {
+		if (playerData.points === winnerPoints) {
+			winners.push(id);
+		}
+	}
+
+	await interaction.channel.send(`<@${winners.join('>, <@')}> won the game! <a:yahoo:1405055893061632122>`);
 
 }
