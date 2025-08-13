@@ -12,6 +12,8 @@
 //			IN CONJUNCTION WITH SHOW POINTS IN THE MIDDLE OF ROUNDS, AND EXIT GAME DUE TO USE OF SPECIAL CHARACTER COMMAND(i.e !show_points, !pause, !exit)
 //		END GAME PREMATURELY
 //			IN CONJUNCTION WITH SHOW POINTS IN THE MIDDLE OF ROUNDS, AND PAUSE GAME DUE TO USE OF SPECIAL CHARACTER COMMAND(i.e !show_points, !pause, !exit)
+//		MAKE SOME OF THE MESSAGES DISPLAY COMPONENTS OR EMBEDS (optional)
+//			FOR EXAMPLE THE WINNER TEXT CAN BE A DISPLAY COMPONENT THAT HAS MARKDOWN TO MAKE IT LARGE OR SOMETHING LIKE THAT
 */
 
 import { ButtonBuilder, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ComponentType, MessageFlags } from 'discord.js';
@@ -160,14 +162,25 @@ export async function execute(interaction) {
 
 		const rightAnswerFilter = async (buttonInteraction) => {
 			// console.log(buttonInteraction.message.components[0].components.find(btn => btn.data.custom_id === 'correct')); 		// this is for finding the button that has the correct answer
-			console.log(buttonInteraction.customId);
+			// console.log(buttonInteraction.customId);
 			if (players.get(buttonInteraction.user.id).answer) {
 				await buttonInteraction.reply({
 					content: 'You have already chosen an answer!',
 					flags: MessageFlags.Ephemeral,
 				});
-				return;
+				return false;
 			}
+			return true;
+		};
+
+		// used to find the real answer
+		const answerCollector = message.createMessageComponentCollector({
+			filter: rightAnswerFilter,
+			componentType: ComponentType.Button,
+			time: 20_000,
+		});
+
+		answerCollector.on('collect', async (buttonInteraction) => {
 			const chosenButton = buttonInteraction.message.components[0].components.find(btn => btn.data.custom_id === buttonInteraction.customId);
 			players.get(buttonInteraction.user.id).answer = chosenButton;
 			if (buttonInteraction.customId === 'correct') {
@@ -188,18 +201,6 @@ export async function execute(interaction) {
 					flags: MessageFlags.Ephemeral,
 				});
 			}
-		};
-
-		// used to find the real answer
-		const answerCollector = message.createMessageComponentCollector({
-			filter: rightAnswerFilter,
-			componentType: ComponentType.Button,
-			time: 20_000,
-		});
-
-		answerCollector.on('collect', buttonInteraction => {
-			// do something on right answer being chosen, code below just for eslint
-			buttonInteraction.user.id;
 		});
 
 		for (const player of players.values()) {
