@@ -203,7 +203,6 @@ export async function execute(interaction) {
 		});
 
 		for (const player of players.values()) {
-			console.log(player);
 			player.answer = null;
 		}
 	}
