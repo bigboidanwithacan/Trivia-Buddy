@@ -1,9 +1,9 @@
 /*
 // MADE GOOD PROGRESS SO FAR
 // 	TO-DO
-//		SHOW POINT IN THE MIDDLE OF ROUNDS
-// 		ADD OPTIONS TO QUIZZES
 //		(IMPORTANT) HAVE THE QUESTIONS WAIT FOR COMPLETION
+// 		ADD OPTIONS TO QUIZZES
+//		SHOW POINT IN THE MIDDLE OF ROUNDS
 // 			ADD A TIMER TO SEE HOW LONG LEFT FOR EACH QUESTION
 //		USE SESSION TOKENS TO NOT REUSE QUESTION ON ACCIDENT
 //			SHOULD BE DELETED OR RESET AFTER 6 HOURS
@@ -22,6 +22,8 @@ import { ButtonBuilder, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, But
 import timers from 'node:timers/promises';
 const wait = timers.setTimeout;
 import { decode } from 'html-entities';
+import { once, EventEmitter } from 'events';
+
 
 const DifficultyMultiplier = {
 	easy: 	1,
@@ -116,6 +118,7 @@ export async function execute(interaction) {
 
 	// for loop below will be the whole of the quiz, each loop will be a question
 	for (const singleQuestion of results) {
+		const emitter = new EventEmitter();
 		const { type, difficulty, category, question, correct_answer, incorrect_answers } = singleQuestion;
 		const embed = new EmbedBuilder()
 			.setTitle(`Question ${questionCounter}`)
@@ -194,6 +197,7 @@ export async function execute(interaction) {
 				await buttonInteraction.reply(`${buttonInteraction.user} got the correct answer!`);
 				players.get(buttonInteraction.user.id).points += 1 * DifficultyMultiplier[difficulty];
 				await buttonInteraction.channel.send(`${buttonInteraction.user}'s points: ${players.get(buttonInteraction.user.id).points}`);
+				emitter.emit('correctAnswer');
 			}
 			else {
 				buttonInteraction.reply({
@@ -203,12 +207,16 @@ export async function execute(interaction) {
 			}
 		});
 
+		// wait here until either a user answers something right or until the timer runs out
+		await Promise.race([
+			once(emitter, 'correctAnswer'),
+			new Promise(res => setTimeout(res, 20_000)),
+		]);
+
 		for (const player of players.values()) {
 			player.answer = null;
 		}
 	}
-
-	await wait(20_000);
 
 	// can be multiple winners as long as they all have the same amount of points
 	const winnerPoints = Math.max(...Array.from(players.values(), player => player.points));
