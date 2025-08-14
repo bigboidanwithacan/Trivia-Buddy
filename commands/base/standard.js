@@ -28,8 +28,12 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction) {
 	await interaction.deferReply();
-	const apiUrl = 'https://opentdb.com/api.php?amount=5';
-	const response = await fetch(apiUrl);
+	const apiUrl = 'https://opentdb.com/api.php?amount=2';
+	const response = await fetch(apiUrl).catch(error => {
+		console.error(error);
+		interaction.reply('Sorry there was a problem fetching the questions! Please try again at a later date or try some of our other quiz options!');
+		return;
+	});
 	const json = await response.json();
 
 	const { results } = json;
@@ -100,7 +104,7 @@ export async function execute(interaction) {
 		setTimeout(() => message.delete(), 5_000);
 	});
 
-	await wait(1000); // 30_500
+	await wait(30_500);
 	let questionCounter = 1;
 
 	// for loop below will be the whole of the quiz, each loop will be a question
@@ -146,7 +150,6 @@ export async function execute(interaction) {
 
 		// add buttons for answers and link it to this message
 		const message = await interaction.channel.send({ embeds: [embed], components: [row] });
-		questionCounter++;
 
 		// used later to wait for completion of rounds
 		const emitter = new EventEmitter();
@@ -176,7 +179,6 @@ export async function execute(interaction) {
 				disableButton(message, ButtonStyle.Success, embed);
 				await buttonInteraction.reply(`${buttonInteraction.user} got the correct answer!`);
 				players.get(buttonInteraction.user.id).points += 1 * DifficultyMultiplier[difficulty];
-				await buttonInteraction.channel.send(`${buttonInteraction.user}'s points: ${players.get(buttonInteraction.user.id).points}`);
 				await emitter.emit('correctAnswer');
 			}
 			else {
@@ -205,10 +207,19 @@ export async function execute(interaction) {
 			once(emitter, 'allAnswered'),
 		]);
 		clearTimeout(timer);
+
+		if (results.length === questionCounter) {
+
+			await interaction.channel.send('# Game over!');
+			await interaction.channel.send('And the winner is...');
+			await wait(3_000);
+			break;
+		}
+		questionCounter++;
 		for (const player of players.values()) {
 			player.answer = null;
 		}
-		timerShowMessage(interaction, 10_000, `Time until round ${questionCounter} starts`);
+		showMessageTimer(interaction, 13_000, `Time until round ${questionCounter} starts`);
 		const leaderboardButton = new ButtonBuilder()
 			.setCustomId('roundLeaderButton')
 			.setLabel('Leaderboard')
@@ -222,14 +233,16 @@ export async function execute(interaction) {
 			components: [leaderRow],
 		});
 
-		const leaderboardCollector = leaderboardMessage.createMessageComponentCollector({ time: 10_000, componentType: ComponentType.Button });
+		const leaderboardCollector = leaderboardMessage.createMessageComponentCollector({ time: 15_000, componentType: ComponentType.Button });
 
 		leaderboardCollector.on('collect', async (buttonInteraction) => {
-			
+			// respond to this and make an ephemeral message with an embed that shows leaderboard
+			showLeaderboard(players, 3, buttonInteraction, true);
+
 		});
 
-		await wait(10_000);
-
+		// if this time gets changed back to 10 seconds make sure to change the collector's and showMessageTimer() call as well (line 223 as of now) time as well
+		await wait(15_000);
 		leaderboardMessage.delete();
 	}
 
@@ -264,7 +277,7 @@ function disableButton(message, buttonStyleCorrect, embed) {
 	message.edit({ embeds: [embed], components: [newRow] });
 }
 
-async function timerShowMessage(interaction, timeUntilCompletion, messageString) {
+async function showMessageTimer(interaction, timeUntilCompletion, messageString) {
 	const now = Date.now();
 	const end = Math.floor((now + timeUntilCompletion) / 1_000);
 	const message = await interaction.channel.send(`${messageString}: <t:${end}:R>`);
@@ -272,4 +285,33 @@ async function timerShowMessage(interaction, timeUntilCompletion, messageString)
 		await message.delete();
 	}, timeUntilCompletion);
 
+}
+
+function showLeaderboard(playersMap, maxPosition, interaction, ephemeralBoolean) {
+	const embed = new EmbedBuilder()
+		.setTitle(`Top ${maxPosition} leaderboard`);
+
+	let playerCount = 0;
+	const positions = [];
+	for (const player of playersMap.keys()) {
+		positions.push({ id: player, points: playersMap.get(player).points });
+	}
+
+	positions.sort((a, b) => b.points - a.points);
+	for (const player of positions) {
+		if (playerCount === maxPosition) break;
+		embed.addFields({ name: `#${playerCount + 1}`, value: `<@${player.id}> with ${player.points} points` });
+		playerCount++;
+	}
+
+	if (ephemeralBoolean) {
+		interaction.reply({
+			embeds: [embed],
+			flags: MessageFlags.Ephemeral,
+		});
+		return;
+	}
+	interaction.reply({
+		embeds: [embed],
+	});
 }
