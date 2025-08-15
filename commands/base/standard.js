@@ -155,6 +155,13 @@ export async function execute(interaction) {
 		const emitter = new EventEmitter();
 
 		const rightAnswerFilter = async (buttonInteraction) => {
+			if (!players.has(buttonInteraction.user.id)) {
+				await buttonInteraction.reply({
+					content: 'You can\'t answer since you are not in the game!',
+					flags: MessageFlags.Ephemeral,
+				});
+				return false;
+			}
 			if (players.get(buttonInteraction.user.id).answer) {
 				await buttonInteraction.reply({
 					content: 'You have already chosen an answer!',
@@ -177,7 +184,7 @@ export async function execute(interaction) {
 			players.get(buttonInteraction.user.id).answer = chosenButton;
 			if (buttonInteraction.customId === 'correct') {
 				disableButton(message, ButtonStyle.Success, embed);
-				await buttonInteraction.reply(`${buttonInteraction.user} got the correct answer!`);
+				await buttonInteraction.reply(`### ${buttonInteraction.user} got the correct answer!`);
 				players.get(buttonInteraction.user.id).points += 1 * DifficultyMultiplier[difficulty];
 				await emitter.emit('correctAnswer');
 			}
@@ -211,8 +218,9 @@ export async function execute(interaction) {
 		if (results.length === questionCounter) {
 
 			await interaction.channel.send('# Game over!');
-			await interaction.channel.send('And the winner is...');
+			const winnerMessage = await interaction.channel.send('And the winner is...');
 			await wait(3_000);
+			await winnerMessage.delete();
 			break;
 		}
 		questionCounter++;
@@ -238,7 +246,6 @@ export async function execute(interaction) {
 		leaderboardCollector.on('collect', async (buttonInteraction) => {
 			// respond to this and make an ephemeral message with an embed that shows leaderboard
 			showLeaderboard(players, 3, buttonInteraction, true);
-
 		});
 
 		// if this time gets changed back to 10 seconds make sure to change the collector's and showMessageTimer() call as well (line 223 as of now) time as well
@@ -248,14 +255,19 @@ export async function execute(interaction) {
 
 	// can be multiple winners as long as they all have the same amount of points
 	const winnerPoints = Math.max(...Array.from(players.values(), player => player.points));
+
+	if (winnerPoints === 0) {
+		await interaction.channel.send('## No one won <:sab:1401562453992538172>. Nobody scored any points so there are no winners for this game :(');
+		return;
+	}
+
 	const winners = [];
 	for (const [id, playerData] of players.entries()) {
 		if (playerData.points === winnerPoints) {
 			winners.push(id);
 		}
 	}
-
-	await interaction.channel.send(`<@${winners.join('>, <@')}> won the game! <a:yahoo:1405055893061632122>`);
+	await interaction.channel.send(`## <@${winners.join('>, <@')}> won the game! <a:yahoo:1405055893061632122>`);
 
 }
 
@@ -287,7 +299,7 @@ async function showMessageTimer(interaction, timeUntilCompletion, messageString)
 
 }
 
-function showLeaderboard(playersMap, maxPosition, interaction, ephemeralBoolean) {
+async function showLeaderboard(playersMap, maxPosition, interaction, ephemeralBoolean) {
 	const embed = new EmbedBuilder()
 		.setTitle(`Top ${maxPosition} leaderboard`);
 
@@ -297,21 +309,31 @@ function showLeaderboard(playersMap, maxPosition, interaction, ephemeralBoolean)
 		positions.push({ id: player, points: playersMap.get(player).points });
 	}
 
+	let foundMyself = false;
 	positions.sort((a, b) => b.points - a.points);
 	for (const player of positions) {
 		if (playerCount === maxPosition) break;
 		embed.addFields({ name: `#${playerCount + 1}`, value: `<@${player.id}> with ${player.points} points` });
+		if (player.id === interaction.user.id) {
+			foundMyself = true;
+		}
 		playerCount++;
 	}
 
+	// Ephemeral messages only allowed in replies and follow ups i believe
+	// also ephemeral leaderboards are only whens someone clicks a button so it will output their position if they are in the game but not in the top how every many positions the leaderboard shows
 	if (ephemeralBoolean) {
-		interaction.reply({
+		if (!foundMyself && playersMap.has(interaction.user.id)) {
+			embed.addFields({ name: `#${positions.indexOf({ id: interaction.user.id })}`, value: `<@${interaction.user.id}> with ${playersMap.get(interaction.user.id).points}` });
+		}
+		await interaction.reply({
 			embeds: [embed],
 			flags: MessageFlags.Ephemeral,
 		});
 		return;
 	}
-	interaction.reply({
+	// Assume that the interaction has already been replied to here so safe to just send to channel
+	await interaction.followUp({
 		embeds: [embed],
 	});
 }
