@@ -1,6 +1,7 @@
 /*
 // MADE GOOD PROGRESS SO FAR
 // 	TO-DO
+//		FOR LEADERBOARD TIES GIVE EVERYONE IN THE POSITION THE SAME RANK, BUT KEEP THE SAME NUMBER OF PEOPLE ON THE LEADERBOARDS
 // 		ADD OPTIONS TO QUIZZES
 //		MAKE CODE MORE MODULAR AND NOT JUST A BIG SPAGHETTI MESS
 // 		PAUSE GAME
@@ -101,12 +102,12 @@ export async function execute(interaction) {
 		});
 	});
 
-	joinButtonCollector.on('end', async () => { // uncomment
-		// const message = await interaction.channel.send('Game is starting!');
-		// setTimeout(() => message.delete(), 5_000);
+	joinButtonCollector.on('end', async () => {
+		const message = await interaction.channel.send('Game is starting!');
+		setTimeout(() => message.delete(), 5_000);
 	});
 
-	await wait(1000); // 30_500
+	await wait(30_500);
 	let questionCounter = 1;
 
 	// for loop below will be the whole of the quiz, each loop will be a question
@@ -149,7 +150,7 @@ export async function execute(interaction) {
 			if (choice === correctButton.data.label) {
 				buttonArray.push(correctButton);
 				if (type === 'multiple') {
-					answerArray.push(`${choice}. ${decode(correct_answer)}`);
+					answerArray.push(`${decode(correct_answer)}`);
 				}
 				continue;
 			}
@@ -160,7 +161,7 @@ export async function execute(interaction) {
 
 			buttonArray.push(wrongButton);
 			if (type === 'multiple') {
-				answerArray.push(`${choice}. ${decode(incorrect_answers[indexCounter])}`);
+				answerArray.push(`${decode(incorrect_answers[indexCounter])}`);
 			}
 			indexCounter++;
 		}
@@ -169,12 +170,11 @@ export async function execute(interaction) {
 		for (const answer of buttonArray) {
 			row.addComponents(answer);
 			if (type === 'multiple') {
-				embed.addFields({ name: ansButtonLabelArray[indexCounter], value: `## ${answerArray[indexCounter]}` });
+				embed.addFields({ name: ansButtonLabelArray[indexCounter], value: `${answerArray[indexCounter]}` });
 				indexCounter++;
 			}
 		}
 
-		console.log('Incorrect answers: ', incorrect_answers);
 		// add buttons for answers and link it to this message
 		now = Date.now();
 		const endRound = Math.round((now + 20_000) / 1_000);
@@ -225,7 +225,7 @@ export async function execute(interaction) {
 				// check if everyone has already answered if so move on from this game
 				if (Array.from(players.values()).every(player => player.answer !== null && player.answer !== undefined)) {
 					disableButton(message, ButtonStyle.Danger, embed);
-					await interaction.channel.send('Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
+					await interaction.channel.send('### Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
 					emitter.emit('allAnswered');
 				}
 			}
@@ -237,7 +237,7 @@ export async function execute(interaction) {
 			new Promise(res => timer = setTimeout(async () => {
 				// announce no one got the question right, and then make correct answer button red
 				disableButton(message, ButtonStyle.Danger, embed);
-				await interaction.channel.send('Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
+				await interaction.channel.send('### Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
 				res();
 			}, 20_000)),
 			once(emitter, 'allAnswered'),
@@ -247,7 +247,7 @@ export async function execute(interaction) {
 		if (results.length === questionCounter) {
 
 			await interaction.channel.send('# Game over!');
-			const winnerMessage = await interaction.channel.send('And the winner is...');
+			const winnerMessage = await interaction.channel.send('### And the winner is...');
 			await wait(3_000);
 			await winnerMessage.delete();
 			break;
@@ -256,7 +256,7 @@ export async function execute(interaction) {
 		for (const player of players.values()) {
 			player.answer = null;
 		}
-		showMessageTimer(interaction, 13_000, `Time until round ${questionCounter} starts`);
+		showMessageTimer(interaction, 13_000, `## Time until round ${questionCounter} starts`);
 		const leaderboardButton = new ButtonBuilder()
 			.setCustomId('roundLeaderButton')
 			.setLabel('Leaderboard')
@@ -278,7 +278,7 @@ export async function execute(interaction) {
 		});
 
 		// if this time gets changed back to 10 seconds make sure to change the collector's and showMessageTimer() call as well (line 223 as of now) time as well
-		await wait(1_000); // 15_000
+		await wait(15_000);
 		leaderboardMessage.delete();
 	}
 
