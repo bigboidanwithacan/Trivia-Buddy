@@ -19,7 +19,7 @@
 */
 
 import { ButtonBuilder, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ComponentType, MessageFlags } from 'discord.js';
-import { wait, capitalizeFirstLetter } from '../util/reusable.js';
+import { wait, capitalizeFirstLetter } from '../util/reusables.js';
 import { decode } from 'html-entities';
 import { once, EventEmitter } from 'events';
 import { DifficultyMultiplier } from './../util/constants.js';

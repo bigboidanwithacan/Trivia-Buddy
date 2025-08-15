@@ -25,8 +25,19 @@ const commandsFolder = fs.readdirSync(commandsFolderPath);
 for (const folder of commandsFolder) {
 	const commandsPath = path.join(commandsFolderPath, folder);
 	const commandFiles = fs.readdirSync(commandsPath);
+	// utility folder does not house any commands but rather functions and possibly modules that are helpful to commands
+	// therefore it has to be skipped when checking for commands
+	if (folder === 'util') {
+		continue;
+	}
 	for (const file of commandFiles) {
 		const filePath = path.join(commandsPath, file);
+		// in case i have some helper stuff for a command, i will create a folder where the command file is
+		// and i do not want that folder to create issues when trying to load up commands
+		const checkForFolder = await fs.promises.stat(filePath);
+		if (checkForFolder.isDirectory()) {
+			continue;
+		}
 		const commandModule = await import(pathToFileURL(filePath).href);
 		const command = { ...commandModule };
 		if ('data' in command && 'execute' in command) {
