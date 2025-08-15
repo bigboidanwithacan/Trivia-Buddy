@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ContainerBuilder, UserSelectMenuBuilder, ButtonStyle, MessageFlags, ComponentType } from 'discord.js';
+import { SlashCommandBuilder, ContainerBuilder, UserSelectMenuBuilder, ButtonStyle, MessageFlags, ComponentType, ButtonBuilder } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
 	.setName('test')
@@ -20,6 +20,15 @@ export async function execute(interaction) {
 						.setPlaceholder('Select users'),
 				),
 		)
+		.addActionRowComponents(
+			actionRow => actionRow
+				.addComponents(
+					new ButtonBuilder()
+						.setCustomId('testButton')
+						.setLabel('Test Button')
+						.setStyle(ButtonStyle.Success),
+				),
+		)
 		.addSeparatorComponents(
 			separator => separator,
 		)
@@ -27,7 +36,7 @@ export async function execute(interaction) {
 			section => section
 				.addTextDisplayComponents(
 					textDisplay => textDisplay
-						.setContent('This text is inside a Text Display component! You can use **any __markdown__** available inside this component too.'),
+						.setContent('# This text is inside a Text Display component! You can use **any __markdown__** available inside this component too.'),
 					textDisplay => textDisplay
 						.setContent('And you can place one button or one thumbnail component next to it!'),
 				)

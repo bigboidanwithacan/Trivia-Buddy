@@ -1,22 +1,24 @@
 /*
 // MADE GOOD PROGRESS SO FAR
 // 	TO-DO
-//		SHOW POINT IN THE MIDDLE OF ROUNDS
-// 			ADD A TIMER TO SEE HOW LONG LEFT FOR EACH QUESTION
 // 		ADD OPTIONS TO QUIZZES
+//		MAKE CODE MORE MODULAR AND NOT JUST A BIG SPAGHETTI MESS
+// 		PAUSE GAME
+//			IN CONJUNCTION WITH EXIT GAME DUE TO USE OF SPECIAL CHARACTER COMMAND(i.e !pause, !exit)
+
+//		END GAME PREMATURELY
+//			IN CONJUNCTION WITH PAUSE GAME DUE TO USE OF SPECIAL CHARACTER COMMAND(i.e !pause, !exit)
+
 //		USE SESSION TOKENS TO NOT REUSE QUESTION ON ACCIDENT
 //			SHOULD BE DELETED OR RESET AFTER 6 HOURS
 //			FILE USED TO STORE IT SHOULD BE DELETED AT THE END OF THE PROCESS (SIGINT, EXIT, SIGTERM)
-// 		PAUSE GAME
-//			IN CONJUNCTION WITH SHOW POINTS IN THE MIDDLE OF ROUNDS, AND EXIT GAME DUE TO USE OF SPECIAL CHARACTER COMMAND(i.e !show_points, !pause, !exit)
-//		END GAME PREMATURELY
-//			IN CONJUNCTION WITH SHOW POINTS IN THE MIDDLE OF ROUNDS, AND PAUSE GAME DUE TO USE OF SPECIAL CHARACTER COMMAND(i.e !show_points, !pause, !exit)
+
 //		MAKE SOME OF THE MESSAGES DISPLAY COMPONENTS OR EMBEDS (optional)
 //			FOR EXAMPLE THE WINNER TEXT CAN BE A DISPLAY COMPONENT THAT HAS MARKDOWN TO MAKE IT LARGE OR SOMETHING LIKE THAT
 */
 
 import { ButtonBuilder, EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ComponentType, MessageFlags } from 'discord.js';
-import { wait } from '../util/wait.js';
+import { wait, capitalizeFirstLetter } from '../util/reusable.js';
 import { decode } from 'html-entities';
 import { once, EventEmitter } from 'events';
 import { DifficultyMultiplier } from './../util/constants.js';
@@ -52,7 +54,7 @@ export async function execute(interaction) {
 
 	// TO-DO add a join game button that lets any user in the server aside from the trivia initiator to join the quiz
 	// add a collector to validate results
-	const now = Date.now();
+	let now = Date.now();
 	const start = Math.floor((now + 30_000) / 1_000);
 	await interaction.editReply(`${interaction.user} has just initiated a trivia game! Follow the step below to join. Countdown till the trivia game starts <t:${start}:R>`);
 	setTimeout(async () => await interaction.deleteReply(), 30_000);
@@ -99,12 +101,12 @@ export async function execute(interaction) {
 		});
 	});
 
-	joinButtonCollector.on('end', async () => {
-		const message = await interaction.channel.send('Game is starting!');
-		setTimeout(() => message.delete(), 5_000);
+	joinButtonCollector.on('end', async () => { // uncomment
+		// const message = await interaction.channel.send('Game is starting!');
+		// setTimeout(() => message.delete(), 5_000);
 	});
 
-	await wait(30_500);
+	await wait(1000); // 30_500
 	let questionCounter = 1;
 
 	// for loop below will be the whole of the quiz, each loop will be a question
@@ -122,34 +124,61 @@ export async function execute(interaction) {
 				{ name:'Question', 	value: decode(question) },
 			);
 
+		const buttonArray = [];
+		const ansButtonLabelArray = [];
+		const answerArray = [];
+		const corAnsIndex = Math.floor(Math.random() * (incorrect_answers.length + 1));
+		if (type === 'multiple') {
+			ansButtonLabelArray.push('A');
+			ansButtonLabelArray.push('B');
+			ansButtonLabelArray.push('C');
+			ansButtonLabelArray.push('D');
+		}
+		else {
+			ansButtonLabelArray.push('True');
+			ansButtonLabelArray.push('False');
+		}
+
 		const correctButton = new ButtonBuilder()
 			.setCustomId('correct')
-			.setLabel(decode(correct_answer))
+			.setLabel((type === 'multiple') ? ansButtonLabelArray[corAnsIndex] : capitalizeFirstLetter(correct_answer))
 			.setStyle(ButtonStyle.Primary);
 
-		const buttonArray = [];
-		const corAnsIndex = Math.floor(Math.random() * incorrect_answers.length) + 1;
-		let indexCounter = 1;
-		for (const answer of incorrect_answers) {
-			if (indexCounter === corAnsIndex) {
+		let indexCounter = 0;
+		for (const choice of ansButtonLabelArray) {
+			if (choice === correctButton.data.label) {
 				buttonArray.push(correctButton);
+				if (type === 'multiple') {
+					answerArray.push(`${choice}. ${decode(correct_answer)}`);
+				}
+				continue;
 			}
 			const wrongButton = new ButtonBuilder()
 				.setCustomId(`wrong${indexCounter}`)
-				.setLabel(decode(answer))
+				.setLabel(choice)
 				.setStyle(ButtonStyle.Primary);
 
 			buttonArray.push(wrongButton);
+			if (type === 'multiple') {
+				answerArray.push(`${choice}. ${decode(incorrect_answers[indexCounter])}`);
+			}
 			indexCounter++;
 		}
-
+		indexCounter = 0;
 		const row = new ActionRowBuilder();
 		for (const answer of buttonArray) {
 			row.addComponents(answer);
+			if (type === 'multiple') {
+				embed.addFields({ name: ansButtonLabelArray[indexCounter], value: `## ${answerArray[indexCounter]}` });
+				indexCounter++;
+			}
 		}
 
+		console.log('Incorrect answers: ', incorrect_answers);
 		// add buttons for answers and link it to this message
-		const message = await interaction.channel.send({ embeds: [embed], components: [row] });
+		now = Date.now();
+		const endRound = Math.round((now + 20_000) / 1_000);
+		const message = await interaction.channel.send({ content: `<t:${endRound}:R> seconds the round is over`, embeds: [embed], components: [row] });
 
 		// used later to wait for completion of rounds
 		const emitter = new EventEmitter();
@@ -245,11 +274,11 @@ export async function execute(interaction) {
 
 		leaderboardCollector.on('collect', async (buttonInteraction) => {
 			// respond to this and make an ephemeral message with an embed that shows leaderboard
-			showLeaderboard(players, 3, buttonInteraction, true);
+			await showLeaderboard(players, 3, buttonInteraction, true);
 		});
 
 		// if this time gets changed back to 10 seconds make sure to change the collector's and showMessageTimer() call as well (line 223 as of now) time as well
-		await wait(15_000);
+		await wait(1_000); // 15_000
 		leaderboardMessage.delete();
 	}
 
@@ -258,6 +287,7 @@ export async function execute(interaction) {
 
 	if (winnerPoints === 0) {
 		await interaction.channel.send('## No one won <:sab:1401562453992538172>. Nobody scored any points so there are no winners for this game :(');
+		await showLeaderboard(players, 25, interaction, false);
 		return;
 	}
 
@@ -268,7 +298,7 @@ export async function execute(interaction) {
 		}
 	}
 	await interaction.channel.send(`## <@${winners.join('>, <@')}> won the game! <a:yahoo:1405055893061632122>`);
-
+	await showLeaderboard(players, 25, interaction, false);
 }
 
 // make file for this later
@@ -286,7 +316,7 @@ function disableButton(message, buttonStyleCorrect, embed) {
 			.setDisabled(true);
 		newRow.addComponents(tempButton);
 	}
-	message.edit({ embeds: [embed], components: [newRow] });
+	message.edit({ content: ' ', embeds: [embed], components: [newRow] });
 }
 
 async function showMessageTimer(interaction, timeUntilCompletion, messageString) {
@@ -300,8 +330,9 @@ async function showMessageTimer(interaction, timeUntilCompletion, messageString)
 }
 
 async function showLeaderboard(playersMap, maxPosition, interaction, ephemeralBoolean) {
+	const maxPlayers = (maxPosition > playersMap.size) ? playersMap.size : maxPosition;
 	const embed = new EmbedBuilder()
-		.setTitle(`Top ${maxPosition} leaderboard`);
+		.setTitle(`Top ${maxPlayers} leaderboard`);
 
 	let playerCount = 0;
 	const positions = [];
@@ -333,7 +364,7 @@ async function showLeaderboard(playersMap, maxPosition, interaction, ephemeralBo
 		return;
 	}
 	// Assume that the interaction has already been replied to here so safe to just send to channel
-	await interaction.followUp({
+	await interaction.channel.send({
 		embeds: [embed],
 	});
 }
