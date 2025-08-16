@@ -16,11 +16,6 @@ const commands = [];
 const commandsFolderPath = path.join(__dirname, '..', 'commands');
 const commandsFolder = fs.readdirSync(commandsFolderPath);
 for (const folder of commandsFolder) {
-	// utility folder does not house any commands but rather functions and possibly modules that are helpful to commands
-	// therefore it has to be skipped when checking for commands
-	if (folder === 'util') {
-		continue;
-	}
 	const commandsPath = path.join(commandsFolderPath, folder);
 	const commandFiles = fs.readdirSync(commandsPath);
 	for (const file of commandFiles) {
@@ -37,6 +32,12 @@ for (const folder of commandsFolder) {
 			commands.push(command.data.toJSON());
 		}
 		else {
+			// utility folder does not always house commands
+			// sometimes it houses functions and possibly modules that are helpful to commands
+			// therefore if a non command file is found just skip the error output
+			if (folder === 'util') {
+				continue;
+			}
 			logChalk.warn(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
 			logger.warn(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
 		}
