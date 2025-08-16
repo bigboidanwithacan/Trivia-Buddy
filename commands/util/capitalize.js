@@ -1,6 +1,3 @@
-import timers from 'node:timers/promises';
-export const wait = timers.setTimeout;
-
 export function capitalizeFirstLetter(word) {
 	if (typeof word !== 'string' || word.length === 0) {
 		return word;
