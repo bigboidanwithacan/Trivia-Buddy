@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from 'discord.js';
+import { categoryNames, categoryToId } from '../../util/constants.js';
 
 export const commandDefinition = new SlashCommandBuilder()
 	.setName('standard')
@@ -40,9 +41,38 @@ export const commandDefinition = new SlashCommandBuilder()
 
 export async function autocomplete(interaction) {
 	const focusedOption = interaction.options.getFocused(true);
-	console.log(focusedOption);
+	const filteredCategory = categoryNames.filter(category => category.toLowerCase().startsWith(focusedOption.value.toLowerCase()));
+
+	await interaction.respond(
+		filteredCategory.map(choice => ({ name: choice, value: choice })),
+	);
 }
 
 export async function extractOptions(interaction) {
-	console.log(interaction.options);
+	let query = '';
+
+	const amount = interaction.options.getInteger('amount');
+	if (amount !== null) query = `amount=${amount}`;
+	else query = 'amount=5';
+	// https://opentdb.com/api.php?amount=10&category=9&difficulty=easy&type=multiple
+	const category = interaction.options.getString('category');
+	if (category !== null) {
+		console.log(Array.isArray(categoryToId), categoryToId);
+		// resolves the promise since categoryToId is technically a promise.
+		const categories = await categoryToId;
+		const match = categories.find(c => c.category === category);
+		if (match) query += `&category=${match.id}`;
+	}
+
+	const difficulty = interaction.options.getString('difficulty');
+	if (difficulty !== null) query += `&difficulty=${difficulty}`;
+
+	const type = interaction.options.getString('type');
+	if (type !== null) query += `&type=${type}`;
+
+	const endGameOnPoints = interaction.options.getBoolean('end_on_points');
+
+	console.log(query);
+
+	return { query, endGameOnPoints };
 }

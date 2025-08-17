@@ -18,7 +18,7 @@
 */
 
 import { ButtonStyle } from 'discord.js';
-import { wait, emitter } from '../util/reusableVars.js';
+import { wait, emitter, instanceCounter } from '../util/reusableVars.js';
 import { once } from 'events';
 import { startWait, roundWait, roundBuffer } from './../util/constants.js';
 import { showLeaderboard } from './helpers/showLeaderboard.js';
@@ -29,6 +29,7 @@ import { APICall } from './helpers/apiCall.js';
 import { joinGame } from './helpers/joinGame.js';
 import { responseHandler } from './helpers/responseCatcher.js';
 import { findWinner } from './helpers/findWinner.js';
+import { commandDefinition, extractOptions } from './helpers/handleCommand.js';
 
 
 export const data = commandDefinition;
@@ -36,12 +37,16 @@ export const data = commandDefinition;
 export { autocomplete } from './helpers/handleCommand.js';
 
 export async function execute(interaction) {
+	const localInstanceCounter = await instanceCounter[0];
+	await instanceCounter[0]++;
 	await interaction.deferReply();
 
-	console.log(interaction.options);
-
 	// when adding options add variables to pass into the APICall() function
-	const results = await APICall(interaction);
+	const { query, endGameOnPoints } = await extractOptions(interaction);
+	if (endGameOnPoints === true) {
+		// the game should now go to max points not till the last question
+	}
+	const results = await APICall(interaction, query);
 	if (results === null) return;
 
 	const players = await joinGame(interaction);
@@ -59,14 +64,14 @@ export async function execute(interaction) {
 		// wait here until either a user answers something right or until the timer runs out
 		let timer = null;
 		await Promise.race([
-			once(emitter, 'correctAnswer'),
+			once(emitter, `correctAnswer${localInstanceCounter}`),
 			new Promise(res => timer = setTimeout(async () => {
 				// announce no one got the question right, and then make correct answer button red
 				disableButton(message, ButtonStyle.Danger);
 				await interaction.channel.send('### Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
 				res();
 			}, roundWait)),
-			once(emitter, 'allAnswered'),
+			once(emitter, `allAnswered${localInstanceCounter}`),
 		]);
 		await clearTimeout(timer);
 

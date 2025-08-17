@@ -3,7 +3,7 @@ import { DifficultyMultiplier, roundWait } from '../../util/constants.js';
 import { emitter } from '../../util/reusableVars.js';
 import { disableButton } from './disableButton.js';
 
-export async function responseHandler(interaction, players, message) {
+export async function responseHandler(interaction, players, message, localInstanceCounter) {
 	const responseFilter = async (buttonInteraction) => {
 		if (!players.has(buttonInteraction.user.id)) {
 			await buttonInteraction.reply({
@@ -36,7 +36,7 @@ export async function responseHandler(interaction, players, message) {
 			disableButton(message, ButtonStyle.Success);
 			await buttonInteraction.reply(`### ${buttonInteraction.user} got the correct answer!`);
 			players.get(buttonInteraction.user.id).points += 1 * DifficultyMultiplier[message.embeds[0].fields.find(field => field.name === 'Difficulty').value];
-			await emitter.emit('correctAnswer');
+			await emitter.emit(`correctAnswer${localInstanceCounter}`);
 		}
 		else {
 			await buttonInteraction.reply({
@@ -47,7 +47,7 @@ export async function responseHandler(interaction, players, message) {
 			if (Array.from(players.values()).every(player => player.answer !== null && player.answer !== undefined)) {
 				disableButton(message, ButtonStyle.Danger);
 				await interaction.channel.send('### Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
-				await emitter.emit('allAnswered');
+				await emitter.emit(`allAnswered${localInstanceCounter}`);
 			}
 		}
 	});
