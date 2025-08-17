@@ -17,8 +17,8 @@
 //			FOR EXAMPLE THE WINNER TEXT CAN BE A DISPLAY COMPONENT THAT HAS MARKDOWN TO MAKE IT LARGE OR SOMETHING LIKE THAT
 */
 
-import { ButtonStyle } from 'discord.js';
-import { wait, emitter, instanceCounter } from '../util/reusableVars.js';
+import { ButtonStyle, MessageFlags } from 'discord.js';
+import { wait, emitter, instanceCounter, currentGameChats } from '../util/reusableVars.js';
 import { once } from 'events';
 import { startWait, roundWait, roundBuffer } from './../util/constants.js';
 import { showLeaderboard } from './helpers/showLeaderboard.js';
@@ -37,9 +37,17 @@ export const data = commandDefinition;
 export { autocomplete } from './helpers/handleCommand.js';
 
 export async function execute(interaction) {
-	const localInstanceCounter = await instanceCounter[0];
-	await instanceCounter[0]++;
+	if (currentGameChats.find(id => id === interaction.channel.id)) {
+		interaction.reply({
+			content: 'Sorry there is a game currently going on in this chat! Please head over to another text chat to start a game.',
+			flags: MessageFlags.Ephemeral,
+		});
+		return;
+	}
 	await interaction.deferReply();
+	currentGameChats.push(interaction.channel.id);
+	console.log(`Channel: ${interaction.channel.name}\t\tLocal instance counter: ${localInstanceCounter}`);
+	await instanceCounter[0]++;
 
 	// when adding options add variables to pass into the APICall() function
 	const { query, endGameOnPoints } = await extractOptions(interaction);
@@ -47,7 +55,13 @@ export async function execute(interaction) {
 		// the game should now go to max points not till the last question
 	}
 	const results = await APICall(interaction, query);
-	if (results === null) return;
+	if (results === null || results === undefined) {
+		interaction.editReply({
+			content: 'Sorry we could not fetch questions at this time from [Open Trivia Database](https://opentdb.com/!)',
+		});
+		currentGameChats.splice(currentGameChats.indexOf(interaction.channel.id), 1);
+		return;
+	}
 
 	const players = await joinGame(interaction);
 
@@ -59,7 +73,7 @@ export async function execute(interaction) {
 		// First create the message to send to user with the questions and answer choices
 		// then handle the responses of the users to the questions
 		const message = await sendQuestion(interaction, singleQuestion, questionCounter);
-		await responseHandler(interaction, players, message);
+		await responseHandler(interaction, players, message, localInstanceCounter);
 
 		// wait here until either a user answers something right or until the timer runs out
 		let timer = null;
@@ -91,5 +105,10 @@ export async function execute(interaction) {
 
 	}
 
+
 	findWinner(interaction, players);
+	console.log('interaction.channel.id:', interaction.channel.id);
+	console.log('currentGameChats: ', currentGameChats);
+	currentGameChats.splice(currentGameChats.indexOf(interaction.channel.id), 1);
+	console.log('currentGameChats after splice: ', currentGameChats);
 }
