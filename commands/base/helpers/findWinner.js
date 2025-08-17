@@ -17,5 +17,5 @@ export async function findWinner(interaction, players) {
 		await interaction.channel.send(`## <@${winners.join('>, <@')}> won the game! <a:yahoo:1405055893061632122>`);
 	}
 
-	await leaderboardOutput(players, 25, interaction, false);
+	await leaderboardOutput(players, 8, interaction, false);
 }

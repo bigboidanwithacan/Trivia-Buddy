@@ -3,7 +3,7 @@ import { categoryNames, categoryToId } from '../../util/constants.js';
 
 export const commandDefinition = new SlashCommandBuilder()
 	.setName('standard')
-	.setDescription('The standard trivia game. Can choose your own options.')
+	.setDescription('The standard trivia game (customizable). Maximum of 8 players at once.')
 	.addIntegerOption(option =>
 		option.setName('amount')
 			.setDescription('Amount of question to include in quiz')
@@ -71,8 +71,6 @@ export async function extractOptions(interaction) {
 	if (type !== null) query += `&type=${type}`;
 
 	const endGameOnPoints = interaction.options.getBoolean('end_on_points');
-
-	console.log(query);
 
 	return { query, endGameOnPoints };
 }

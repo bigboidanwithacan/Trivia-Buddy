@@ -40,6 +40,7 @@ export async function joinGame(interaction) {
 		filter: joinFilter,
 		componentType: ComponentType.Button,
 		time: startWait,
+		maxUsers: 8,
 	});
 
 	joinButtonCollector.on('collect', async (buttonInteraction) => {
