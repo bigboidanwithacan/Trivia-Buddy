@@ -17,7 +17,7 @@
 //			FOR EXAMPLE THE WINNER TEXT CAN BE A DISPLAY COMPONENT THAT HAS MARKDOWN TO MAKE IT LARGE OR SOMETHING LIKE THAT
 */
 
-import { SlashCommandBuilder, ButtonStyle } from 'discord.js';
+import { ButtonStyle } from 'discord.js';
 import { wait, emitter } from '../util/reusableVars.js';
 import { once } from 'events';
 import { startWait, roundWait, roundBuffer } from './../util/constants.js';
@@ -25,18 +25,21 @@ import { showLeaderboard } from './helpers/showLeaderboard.js';
 import { disableButton } from './helpers/disableButton.js';
 import { showMessageTimer } from './helpers/showMessageTimer.js';
 import { sendQuestion } from './helpers/sendQuestion.js';
-import { APICall } from './helpers/openTDBAPICall.js';
+import { APICall } from './helpers/apiCall.js';
 import { joinGame } from './helpers/joinGame.js';
 import { responseHandler } from './helpers/responseCatcher.js';
 import { findWinner } from './helpers/findWinner.js';
 
 
-export const data = new SlashCommandBuilder()
-	.setName('standard')
-	.setDescription('The standard trivia game. Can choose your own options.');
+export const data = commandDefinition;
+
+export { autocomplete } from './helpers/handleCommand.js';
 
 export async function execute(interaction) {
 	await interaction.deferReply();
+
+	console.log(interaction.options);
+
 	// when adding options add variables to pass into the APICall() function
 	const results = await APICall(interaction);
 	if (results === null) return;
