@@ -20,7 +20,7 @@
 import { ButtonStyle, MessageFlags } from 'discord.js';
 import { wait, currentGameChats } from '../util/reusableVars.js';
 import { once } from 'events';
-import { startWait, roundWait, roundBuffer } from './../util/constants.js';
+import { START_WAIT, ROUND_WAIT, ROUND_BUFFER } from './../util/constants.js';
 import { showLeaderboard } from './helpers/showLeaderboard.js';
 import { disableButton } from './helpers/disableButton.js';
 import { showMessageTimer } from './helpers/showMessageTimer.js';
@@ -65,7 +65,7 @@ export async function execute(interaction) {
 
 		const players = await joinGame(interaction, game);
 
-		await wait(startWait + 500);
+		await wait(START_WAIT + 500);
 		let questionCounter = 1;
 
 		// for loop below will be the whole of the quiz, each loop will be a question
@@ -84,13 +84,13 @@ export async function execute(interaction) {
 					disableButton(message, ButtonStyle.Danger);
 					await interaction.channel.send('### Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
 					res();
-				}, roundWait)),
+				}, ROUND_WAIT)),
 				once(game.emitter, 'allAnswered'),
 			]);
 			await clearTimeout(timer);
 			game.cleanEmitter();
 
-			if (results.length === questionCounter) {
+			if (results.length === questionCounter || game.foundWinner === true) {
 				await interaction.channel.send('# Game over!');
 				const winnerMessage = await interaction.channel.send('### And the winner is...');
 				await wait(3_000);
@@ -101,17 +101,14 @@ export async function execute(interaction) {
 			for (const player of players.values()) {
 				player.answer = null;
 			}
-			await showMessageTimer(interaction, (roundBuffer - 2_000), `## Time until round ${questionCounter} starts`);
+			await showMessageTimer(interaction, (ROUND_BUFFER - 2_000), `## Time until round ${questionCounter} starts`);
 			await showLeaderboard(interaction, players);
 
 		}
 
 
 		findWinner(interaction, players);
-		console.log('interaction.channel.id:', interaction.channel.id);
-		console.log('currentGameChats: ', currentGameChats);
 		currentGameChats.splice(currentGameChats.indexOf(interaction.channel.id), 1);
-		console.log('currentGameChats after splice: ', currentGameChats);
 	}
 	catch (error) {
 		interaction.followUp({

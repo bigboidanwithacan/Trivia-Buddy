@@ -1,5 +1,5 @@
 import { ButtonBuilder, ActionRowBuilder, ButtonStyle, ComponentType, MessageFlags, EmbedBuilder } from 'discord.js';
-import { joinedMessages, startWait } from '../../util/constants.js';
+import { joinedMessages, MAX_PLAYERS, START_WAIT } from '../../util/constants.js';
 
 export async function joinGame(interaction, game) {
 	const joinButton = new ButtonBuilder()
@@ -12,7 +12,7 @@ export async function joinGame(interaction, game) {
 		.addComponents(joinButton);
 
 	const now = Date.now();
-	const start = Math.floor((now + startWait) / 1_000);
+	const start = Math.floor((now + START_WAIT) / 1_000);
 
 	const embed = new EmbedBuilder()
 		.setTitle('Game Options');
@@ -23,7 +23,7 @@ export async function joinGame(interaction, game) {
 	}
 	await interaction.editReply(`${interaction.user} has just initiated a trivia game! Click the button below to join. Countdown till the trivia game starts <t:${start}:R>`);
 	await game.interaction.channel.send({ embeds: [embed] });
-	setTimeout(async () => await interaction.deleteReply(), startWait);
+	setTimeout(async () => await interaction.deleteReply(), START_WAIT);
 
 	const joinMessage = await interaction.channel.send({
 		content: 'Click the button below to join the game if you are not the current host!',
@@ -48,8 +48,8 @@ export async function joinGame(interaction, game) {
 	const joinButtonCollector = joinMessage.createMessageComponentCollector({
 		filter: joinFilter,
 		componentType: ComponentType.Button,
-		time: startWait,
-		maxUsers: 8,
+		time: START_WAIT,
+		maxUsers: MAX_PLAYERS,
 	});
 
 	joinButtonCollector.on('collect', async (buttonInteraction) => {

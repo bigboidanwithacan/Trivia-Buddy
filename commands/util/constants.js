@@ -13,11 +13,13 @@ export const joinedMessages = Object.freeze([
 	'Double join? You\'re eager — we love that! But one join is all you need. 😄',
 ]);
 
-export const startWait = 30_000;
+export const START_WAIT = 30_000;
 
-export const roundWait = 20_000;
+export const ROUND_WAIT = 20_000;
 
-export const roundBuffer = 15_000;
+export const ROUND_BUFFER = 15_000;
+
+export const MAX_PLAYERS = 8;
 
 export const categoryNames = Object.freeze([
 	'General Knowledge',

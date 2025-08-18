@@ -1,5 +1,5 @@
 import { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, MessageFlags } from 'discord.js';
-import { roundBuffer } from '../../util/constants.js';
+import { ROUND_BUFFER } from '../../util/constants.js';
 import { wait } from '../../util/reusableVars.js';
 
 export async function showLeaderboard(interaction, players) {
@@ -16,14 +16,14 @@ export async function showLeaderboard(interaction, players) {
 		components: [leaderRow],
 	});
 
-	const leaderboardCollector = leaderboardMessage.createMessageComponentCollector({ time: roundBuffer, componentType: ComponentType.Button });
+	const leaderboardCollector = leaderboardMessage.createMessageComponentCollector({ time: ROUND_BUFFER, componentType: ComponentType.Button });
 
 	leaderboardCollector.on('collect', async (buttonInteraction) => {
 		// respond to this and make an ephemeral message with an embed that shows leaderboard
 		await leaderboardOutput(players, 3, buttonInteraction, true);
 	});
 
-	await wait(roundBuffer);
+	await wait(ROUND_BUFFER);
 	leaderboardMessage.delete();
 }
 

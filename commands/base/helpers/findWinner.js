@@ -1,3 +1,4 @@
+import { MAX_PLAYERS } from '../../util/constants.js';
 import { leaderboardOutput } from './showLeaderboard.js';
 
 export async function findWinner(interaction, players) {
@@ -17,5 +18,5 @@ export async function findWinner(interaction, players) {
 		await interaction.channel.send(`## <@${winners.join('>, <@')}> won the game! <a:yahoo:1405055893061632122>`);
 	}
 
-	await leaderboardOutput(players, 8, interaction, false);
+	await leaderboardOutput(players, MAX_PLAYERS, interaction, false);
 }

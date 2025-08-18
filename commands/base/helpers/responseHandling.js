@@ -1,5 +1,5 @@
 import { MessageFlags, ComponentType, ButtonStyle } from 'discord.js';
-import { DifficultyMultiplier, roundWait } from '../../util/constants.js';
+import { DifficultyMultiplier, ROUND_WAIT } from '../../util/constants.js';
 import { disableButton } from './disableButton.js';
 
 export async function responseHandler(game, interaction, players, message) {
@@ -24,7 +24,7 @@ export async function responseHandler(game, interaction, players, message) {
 	const answerCollector = message.createMessageComponentCollector({
 		filter: responseFilter,
 		componentType: ComponentType.Button,
-		time: roundWait,
+		time: ROUND_WAIT,
 	});
 
 	answerCollector.on('collect', async (buttonInteraction) => {

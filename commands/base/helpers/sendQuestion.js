@@ -1,7 +1,7 @@
 import { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } from 'discord.js';
 import { capitalizeFirstLetter } from '../../util/capitalize.js';
 import { decode } from 'html-entities';
-import { roundWait } from '../../util/constants.js';
+import { ROUND_WAIT } from '../../util/constants.js';
 
 export async function sendQuestion(interaction, singleQuestion, questionCounter) {
 	const { type, difficulty, category, question, correct_answer, incorrect_answers } = singleQuestion;
@@ -69,7 +69,7 @@ export async function sendQuestion(interaction, singleQuestion, questionCounter)
 
 	// add buttons for answers and link it to this message
 	const now = Date.now();
-	const endRound = Math.round((now + roundWait) / 1_000);
+	const endRound = Math.round((now + ROUND_WAIT) / 1_000);
 	const message = await interaction.channel.send({ content: `<t:${endRound}:R> seconds the round is over`, embeds: [embed], components: [row] });
 
 	return message;
