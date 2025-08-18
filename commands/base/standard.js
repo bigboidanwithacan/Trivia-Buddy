@@ -101,6 +101,7 @@ export async function execute(interaction) {
 			for (const player of players.values()) {
 				player.answer = null;
 			}
+			await wait (1_500);
 			await showMessageTimer(interaction, (ROUND_BUFFER - 2_000), `## Time until round ${questionCounter} starts`);
 			await showLeaderboard(interaction, players);
 

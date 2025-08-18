@@ -14,11 +14,8 @@ export const joinedMessages = Object.freeze([
 ]);
 
 export const START_WAIT = 30_000;
-
 export const ROUND_WAIT = 20_000;
-
 export const ROUND_BUFFER = 15_000;
-
 export const MAX_PLAYERS = 8;
 
 export const categoryNames = Object.freeze([

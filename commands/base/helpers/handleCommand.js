@@ -65,10 +65,10 @@ export async function extractOptions(interaction, game) {
 	}
 
 	const difficulty = interaction.options.getString('difficulty');
-	if (difficulty !== null) query += `&difficulty=${difficulty}`;
+	if (difficulty !== null && difficulty !== ' ') query += `&difficulty=${difficulty}`;
 
 	const type = interaction.options.getString('type');
-	if (type !== null) query += `&type=${type}`;
+	if (type !== null && type !== ' ') query += `&type=${type}`;
 
 	const endGameOnPoints = interaction.options.getBoolean('end_on_points');
 
