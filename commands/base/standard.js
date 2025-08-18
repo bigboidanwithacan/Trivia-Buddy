@@ -20,7 +20,7 @@
 import { ButtonStyle, MessageFlags } from 'discord.js';
 import { wait, currentGameChats } from '../util/reusableVars.js';
 import { once } from 'events';
-import { START_WAIT, ROUND_WAIT, ROUND_BUFFER } from './../util/constants.js';
+import { START_WAIT, ROUND_WAIT, ROUND_BUFFER, SMALL_DELAY, REGULAR_DELAY } from './../util/constants.js';
 import { showLeaderboard } from './helpers/showLeaderboard.js';
 import { disableButton } from './helpers/disableButton.js';
 import { showMessageTimer } from './helpers/showMessageTimer.js';
@@ -91,9 +91,11 @@ export async function execute(interaction) {
 			game.cleanEmitter();
 
 			if (results.length === questionCounter || game.foundWinner === true) {
+				await wait(SMALL_DELAY / 2);
 				await interaction.channel.send('# Game over!');
+				await wait(SMALL_DELAY / 2);
 				const winnerMessage = await interaction.channel.send('### And the winner is...');
-				await wait(3_000);
+				await wait(REGULAR_DELAY);
 				winnerMessage.delete();
 				break;
 			}
@@ -101,14 +103,14 @@ export async function execute(interaction) {
 			for (const player of players.values()) {
 				player.answer = null;
 			}
-			await wait (1_500);
-			await showMessageTimer(interaction, (ROUND_BUFFER - 2_000), `## Time until round ${questionCounter} starts`);
+			await wait (SMALL_DELAY);
+			await showMessageTimer(interaction, (ROUND_BUFFER - 1_000), `## Time until round ${questionCounter} starts`);
 			await showLeaderboard(interaction, players);
 
 		}
 
 
-		findWinner(interaction, players);
+		await findWinner(interaction, players);
 		currentGameChats.splice(currentGameChats.indexOf(interaction.channel.id), 1);
 	}
 	catch (error) {

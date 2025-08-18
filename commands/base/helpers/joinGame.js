@@ -18,7 +18,7 @@ export async function joinGame(interaction, game) {
 		.setTitle('Game Options');
 	for (const option of Object.entries(game.options)) {
 		if (option[1] !== null) {
-			embed.addFields({ name: option[0], value: `${option[1]}` });
+			embed.addFields({ name: option[0], value: `${(option[1] !== ' ') ? option[1] : 'any' }` });
 		}
 	}
 	await interaction.editReply(`${interaction.user} has just initiated a trivia game! Click the button below to join. Countdown till the trivia game starts <t:${start}:R>`);

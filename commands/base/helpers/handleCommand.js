@@ -72,6 +72,8 @@ export async function extractOptions(interaction, game) {
 
 	const endGameOnPoints = interaction.options.getBoolean('end_on_points');
 
+	await game.getSessionToken(interaction.channel.id);
+	query += `&token=${game.sessionToken}`;
 	game.setCurrentGameOptions(definedAmount, category, difficulty, type, endGameOnPoints);
 
 	return { query, endGameOnPoints };

@@ -17,6 +17,11 @@ export const START_WAIT = 30_000;
 export const ROUND_WAIT = 20_000;
 export const ROUND_BUFFER = 15_000;
 export const MAX_PLAYERS = 8;
+// used to make game feel a lil smoother imo
+export const SMALL_DELAY = 1_000;
+export const REGULAR_DELAY = 3_000;
+// the time before a session token is deleted
+export const SIX_HOURS = 3_600_000;
 
 export const categoryNames = Object.freeze([
 	'General Knowledge',
