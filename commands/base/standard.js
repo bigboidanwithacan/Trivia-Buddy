@@ -39,7 +39,7 @@ export { autocomplete } from './helpers/handleCommand.js';
 export async function execute(interaction) {
 	if (currentGameChats.find(id => id === interaction.channel.id)) {
 		interaction.reply({
-			content: 'Sorry there is a game currently going on in this chat! Please head over to another text chat to start a game.',
+			content: 'Sorry there is a game currently going on in this chat! Please head over to another text chat or thread to start a game.',
 			flags: MessageFlags.Ephemeral,
 		});
 		return;
