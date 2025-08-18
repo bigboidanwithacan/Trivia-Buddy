@@ -18,7 +18,7 @@
 */
 
 import { ButtonStyle, MessageFlags } from 'discord.js';
-import { wait, emitter, instanceCounter, currentGameChats } from '../util/reusableVars.js';
+import { wait, currentGameChats } from '../util/reusableVars.js';
 import { once } from 'events';
 import { startWait, roundWait, roundBuffer } from './../util/constants.js';
 import { showLeaderboard } from './helpers/showLeaderboard.js';
@@ -27,10 +27,10 @@ import { showMessageTimer } from './helpers/showMessageTimer.js';
 import { sendQuestion } from './helpers/sendQuestion.js';
 import { APICall } from './helpers/apiCall.js';
 import { joinGame } from './helpers/joinGame.js';
-import { responseHandler } from './helpers/responseCatcher.js';
+import { responseHandler } from './helpers/responseHandling.js';
 import { findWinner } from './helpers/findWinner.js';
 import { commandDefinition, extractOptions } from './helpers/handleCommand.js';
-
+import { Game } from './helpers/gameClass.js';
 
 export const data = commandDefinition;
 
@@ -45,70 +45,81 @@ export async function execute(interaction) {
 		return;
 	}
 	await interaction.deferReply();
+	const game = new Game(interaction);
 	currentGameChats.push(interaction.channel.id);
-	console.log(`Channel: ${interaction.channel.name}\t\tLocal instance counter: ${localInstanceCounter}`);
-	await instanceCounter[0]++;
 
-	// when adding options add variables to pass into the APICall() function
-	const { query, endGameOnPoints } = await extractOptions(interaction);
-	if (endGameOnPoints === true) {
+	try {
+		// when adding options add variables to pass into the APICall() function
+		const { query, endGameOnPoints } = await extractOptions(interaction, game);
+		if (endGameOnPoints === true) {
 		// the game should now go to max points not till the last question
+		}
+		const results = await APICall(interaction, query);
+		if (results === null || results === undefined) {
+			interaction.editReply({
+				content: 'Sorry we could not fetch questions at this time from [Open Trivia Database](https://opentdb.com/!)',
+			});
+			currentGameChats.splice(currentGameChats.indexOf(interaction.channel.id), 1);
+			return;
+		}
+
+		const players = await joinGame(interaction, game);
+
+		await wait(startWait + 500);
+		let questionCounter = 1;
+
+		// for loop below will be the whole of the quiz, each loop will be a question
+		for (const singleQuestion of results) {
+		// First create the message to send to user with the questions and answer choices
+		// then handle the responses of the users to the questions
+			const message = await sendQuestion(interaction, singleQuestion, questionCounter);
+			await responseHandler(game, interaction, players, message);
+
+			// wait here until either a user answers something right or until the timer runs out
+			let timer = null;
+			await Promise.race([
+				once(game.emitter, 'correctAnswer'),
+				new Promise(res => timer = setTimeout(async () => {
+				// announce no one got the question right, and then make correct answer button red
+					disableButton(message, ButtonStyle.Danger);
+					await interaction.channel.send('### Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
+					res();
+				}, roundWait)),
+				once(game.emitter, 'allAnswered'),
+			]);
+			await clearTimeout(timer);
+			game.cleanEmitter();
+
+			if (results.length === questionCounter) {
+				await interaction.channel.send('# Game over!');
+				const winnerMessage = await interaction.channel.send('### And the winner is...');
+				await wait(3_000);
+				winnerMessage.delete();
+				break;
+			}
+			questionCounter++;
+			for (const player of players.values()) {
+				player.answer = null;
+			}
+			await showMessageTimer(interaction, (roundBuffer - 2_000), `## Time until round ${questionCounter} starts`);
+			await showLeaderboard(interaction, players);
+
+		}
+
+
+		findWinner(interaction, players);
+		console.log('interaction.channel.id:', interaction.channel.id);
+		console.log('currentGameChats: ', currentGameChats);
+		currentGameChats.splice(currentGameChats.indexOf(interaction.channel.id), 1);
+		console.log('currentGameChats after splice: ', currentGameChats);
 	}
-	const results = await APICall(interaction, query);
-	if (results === null || results === undefined) {
-		interaction.editReply({
-			content: 'Sorry we could not fetch questions at this time from [Open Trivia Database](https://opentdb.com/!)',
+	catch (error) {
+		interaction.followUp({
+			content: 'Sorry we had trouble running this command!',
+			flags: MessageFlags.Ephemeral,
 		});
+		console.error(error);
 		currentGameChats.splice(currentGameChats.indexOf(interaction.channel.id), 1);
 		return;
 	}
-
-	const players = await joinGame(interaction);
-
-	await wait(startWait + 500);
-	let questionCounter = 1;
-
-	// for loop below will be the whole of the quiz, each loop will be a question
-	for (const singleQuestion of results) {
-		// First create the message to send to user with the questions and answer choices
-		// then handle the responses of the users to the questions
-		const message = await sendQuestion(interaction, singleQuestion, questionCounter);
-		await responseHandler(interaction, players, message, localInstanceCounter);
-
-		// wait here until either a user answers something right or until the timer runs out
-		let timer = null;
-		await Promise.race([
-			once(emitter, `correctAnswer${localInstanceCounter}`),
-			new Promise(res => timer = setTimeout(async () => {
-				// announce no one got the question right, and then make correct answer button red
-				disableButton(message, ButtonStyle.Danger);
-				await interaction.channel.send('### Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
-				res();
-			}, roundWait)),
-			once(emitter, `allAnswered${localInstanceCounter}`),
-		]);
-		await clearTimeout(timer);
-
-		if (results.length === questionCounter) {
-			await interaction.channel.send('# Game over!');
-			const winnerMessage = await interaction.channel.send('### And the winner is...');
-			await wait(3_000);
-			winnerMessage.delete();
-			break;
-		}
-		questionCounter++;
-		for (const player of players.values()) {
-			player.answer = null;
-		}
-		await showMessageTimer(interaction, (roundBuffer - 2_000), `## Time until round ${questionCounter} starts`);
-		await showLeaderboard(interaction, players);
-
-	}
-
-
-	findWinner(interaction, players);
-	console.log('interaction.channel.id:', interaction.channel.id);
-	console.log('currentGameChats: ', currentGameChats);
-	currentGameChats.splice(currentGameChats.indexOf(interaction.channel.id), 1);
-	console.log('currentGameChats after splice: ', currentGameChats);
 }

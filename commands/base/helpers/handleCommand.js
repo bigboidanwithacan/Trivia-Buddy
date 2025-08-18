@@ -48,16 +48,16 @@ export async function autocomplete(interaction) {
 	);
 }
 
-export async function extractOptions(interaction) {
+export async function extractOptions(interaction, game) {
 	let query = '';
 
 	const amount = interaction.options.getInteger('amount');
 	if (amount !== null) query = `amount=${amount}`;
 	else query = 'amount=5';
+	const definedAmount = amount ?? 5;
 	// https://opentdb.com/api.php?amount=10&category=9&difficulty=easy&type=multiple
 	const category = interaction.options.getString('category');
 	if (category !== null) {
-		console.log(Array.isArray(categoryToId), categoryToId);
 		// resolves the promise since categoryToId is technically a promise.
 		const categories = await categoryToId;
 		const match = categories.find(c => c.category === category);
@@ -71,6 +71,8 @@ export async function extractOptions(interaction) {
 	if (type !== null) query += `&type=${type}`;
 
 	const endGameOnPoints = interaction.options.getBoolean('end_on_points');
+
+	game.setCurrentGameOptions(definedAmount, category, difficulty, type, endGameOnPoints);
 
 	return { query, endGameOnPoints };
 }

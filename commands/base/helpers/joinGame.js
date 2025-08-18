@@ -1,7 +1,7 @@
-import { ButtonBuilder, ActionRowBuilder, ButtonStyle, ComponentType, MessageFlags } from 'discord.js';
+import { ButtonBuilder, ActionRowBuilder, ButtonStyle, ComponentType, MessageFlags, EmbedBuilder } from 'discord.js';
 import { joinedMessages, startWait } from '../../util/constants.js';
 
-export async function joinGame(interaction) {
+export async function joinGame(interaction, game) {
 	const joinButton = new ButtonBuilder()
 		.setCustomId('join')
 		.setLabel('Join The Game!')
@@ -13,7 +13,18 @@ export async function joinGame(interaction) {
 
 	const now = Date.now();
 	const start = Math.floor((now + startWait) / 1_000);
-	await interaction.editReply(`${interaction.user} has just initiated a trivia game! Click the button below to join. Countdown till the trivia game starts <t:${start}:R>`);
+
+	const embed = new EmbedBuilder()
+		.setTitle('Game Options');
+	for (const option of Object.entries(game.options)) {
+		if (option[1] !== null) {
+			embed.addFields({ name: option[0], value: `${option[1]}` });
+		}
+	}
+	await interaction.editReply({
+		content: `${interaction.user} has just initiated a trivia game! Click the button below to join. Countdown till the trivia game starts <t:${start}:R>`
+	});
+	await game.interaction.channel.send({ embeds: [embed] });
 	setTimeout(async () => await interaction.deleteReply(), startWait);
 
 	const joinMessage = await interaction.channel.send({
