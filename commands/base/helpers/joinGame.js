@@ -21,9 +21,7 @@ export async function joinGame(interaction, game) {
 			embed.addFields({ name: option[0], value: `${option[1]}` });
 		}
 	}
-	await interaction.editReply({
-		content: `${interaction.user} has just initiated a trivia game! Click the button below to join. Countdown till the trivia game starts <t:${start}:R>`
-	});
+	await interaction.editReply(`${interaction.user} has just initiated a trivia game! Click the button below to join. Countdown till the trivia game starts <t:${start}:R>`);
 	await game.interaction.channel.send({ embeds: [embed] });
 	setTimeout(async () => await interaction.deleteReply(), startWait);
 
