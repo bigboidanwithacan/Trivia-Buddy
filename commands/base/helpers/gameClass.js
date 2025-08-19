@@ -1,17 +1,19 @@
 import { EventEmitter } from 'events';
 import util from 'util';
-import { sessionTokens } from '../../util/reusableVars.js';
-import { SIX_HOURS } from '../../util/constants.js';
+import { sessionTokens, wait } from '../../util/reusableVars.js';
+import { MAX_TIME, PAUSE_TIME, SIX_HOURS, SMALL_DELAY } from '../../util/constants.js';
 import { logger } from '../../../utility/logger.js';
 
 // or i can have this class extended EventEmitter
 export class Game {
 	constructor(interaction) {
 		// chatInputCommandInteraction that started this whole game off
-		// just incase its undefined idk
-		this.interaction = interaction ?? null;
+		this.interaction = interaction;
 		this.emitter = new EventEmitter();
 		this.players = new Map();
+		this.commandMessageCollection();
+		this.quizStart = false;
+		this.quizEnd = false;
 	}
 
 	setCurrentInteraction(interaction) {
@@ -22,7 +24,15 @@ export class Game {
 	// look in notion for extra detail and don't forget to check the guide on classes
 
 	cleanEmitter() {
-		this.emitter.removeAllListeners();
+		if (this.quizEnd) {
+			this.emitter.removeAllListeners();
+			return;
+		}
+		if (this.quizStart) {
+			this.emitter.removeAllListeners('startQuiz');
+		}
+		this.emitter.removeAllListeners('correctAnswer');
+		this.emitter.removeAllListeners('allAnswered');
 	}
 
 	setCurrentQuestion(question) {
@@ -41,7 +51,7 @@ export class Game {
 
 	// for debugging
 	outputAllMembers() {
-		console.log(console.log(util.inspect(this, { showHidden: false, depth: null, colors: true })));
+		console.log(util.inspect(this, { showHidden: false, depth: null, colors: true }));
 	}
 
 	// the function i will use to get session tokens for games. these session tokens will only apply to a single channel
@@ -68,4 +78,44 @@ export class Game {
 		sessionTokens.delete(channelId);
 	}
 
+	// waits for a command from the initiator of the game
+	// viable command include
+	// 		pause game -> pause
+	// 		end game early -> end
+	// 		start early -> start
+	commandMessageCollection() {
+		const messageFilter = (message) => message.author.id === this.interaction.user.id;
+		this.commandCollector = this.interaction.channel.createMessageCollector({
+			filter: messageFilter,
+			time: MAX_TIME,
+		});
+
+		this.commandCollector.on('collect', async (msg) => {
+			console.log(msg.content);
+			console.log('quiz start', this.quizStart);
+			console.log('quiz end: ', this.quizEnd);
+			if (msg.content === 'start' && !this.quizStart) {
+				this.emitter.emit('startQuiz');
+			}
+			else if (msg.content === 'pause') {
+				// fix
+				await Promise.race([
+					new Promise(res => this.timer = setTimeout(async () => {
+						await msg.channel.send('# Game is starting!');
+						await wait(SMALL_DELAY);
+						res();
+					}, PAUSE_TIME)),
+				]);
+			}
+			else if (msg.content === 'unpause') {
+				// fix
+				clearTimeout(this.timer);
+			}
+			else if (msg.content === 'end') {
+				// fix
+				this.emitter.emit('endQuiz');
+				this.quizEnd = true;
+			}
+		});
+	}
 };

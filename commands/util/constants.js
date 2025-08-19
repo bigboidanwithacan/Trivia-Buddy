@@ -13,6 +13,7 @@ export const joinedMessages = Object.freeze([
 	'Double join? You\'re eager — we love that! But one join is all you need. 😄',
 ]);
 
+export const PAUSE_TIME = 60_000;
 export const START_WAIT = 30_000;
 export const ROUND_WAIT = 20_000;
 export const ROUND_BUFFER = 15_000;
@@ -22,6 +23,9 @@ export const SMALL_DELAY = 1_000;
 export const REGULAR_DELAY = 3_000;
 // the time before a session token is deleted
 export const SIX_HOURS = 3_600_000;
+// there should be no games that are longer than 30 minutes (technically 33.3 minutes)
+export const MAX_TIME = 2_000_000;
+
 
 export const categoryNames = Object.freeze([
 	'General Knowledge',

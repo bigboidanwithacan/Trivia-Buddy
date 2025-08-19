@@ -41,7 +41,7 @@ export const commandDefinition = new SlashCommandBuilder()
 
 export async function autocomplete(interaction) {
 	const focusedOption = interaction.options.getFocused(true);
-	const filteredCategory = categoryNames.filter(category => category.toLowerCase().startsWith(focusedOption.value.toLowerCase()));
+	const filteredCategory = categoryNames.filter(category => category.toLowerCase().includes(focusedOption.value.toLowerCase()));
 
 	await interaction.respond(
 		filteredCategory.map(choice => ({ name: choice, value: choice })),

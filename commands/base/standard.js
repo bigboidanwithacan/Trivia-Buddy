@@ -9,10 +9,6 @@
 //		END GAME PREMATURELY
 //			IN CONJUNCTION WITH PAUSE GAME DUE TO USE OF SPECIAL CHARACTER COMMAND(i.e !pause, !exit)
 
-//		USE SESSION TOKENS TO NOT REUSE QUESTION ON ACCIDENT
-//			SHOULD BE DELETED OR RESET AFTER 6 HOURS
-//			FILE USED TO STORE IT SHOULD BE DELETED AT THE END OF THE PROCESS (SIGINT, EXIT, SIGTERM)
-
 //		MAKE SOME OF THE MESSAGES DISPLAY COMPONENTS OR EMBEDS (optional)
 //			FOR EXAMPLE THE WINNER TEXT CAN BE A DISPLAY COMPONENT THAT HAS MARKDOWN TO MAKE IT LARGE OR SOMETHING LIKE THAT
 */
@@ -45,14 +41,22 @@ export async function execute(interaction) {
 		return;
 	}
 	await interaction.deferReply();
+	// TO-DO
+	// from this and below call runGame.js function and encapsulate the code below into that function
+	// then i can have a promise race between the function in runGame.js finishing first or an event listener that listens for the 'endQuiz' event
 	const game = new Game(interaction);
 	currentGameChats.push(interaction.channel.id);
 
 	try {
 		// when adding options add variables to pass into the APICall() function
+		game.emitter.once('endQuiz', () => {
+			interaction.channel.send('This quiz has been prematurely ended! <:sab:1401562453992538172>');
+			return;
+		});
 		const { query, endGameOnPoints } = await extractOptions(interaction, game);
 		if (endGameOnPoints === true) {
 		// the game should now go to max points not till the last question
+		// TO-DO
 		}
 		const results = await APICall(interaction, query);
 		if (results === null || results === undefined) {
@@ -62,12 +66,19 @@ export async function execute(interaction) {
 			currentGameChats.splice(currentGameChats.indexOf(interaction.channel.id), 1);
 			return;
 		}
-
 		const players = await joinGame(interaction, game);
 
-		await wait(START_WAIT + 500);
-		let questionCounter = 1;
+		await Promise.race([
+			new Promise(res => {
+				setTimeout(() => {
+					res();
+				}, START_WAIT + 500);
+			}),
+			once(game.emitter, 'startQuiz'),
+		]);
 
+		let questionCounter = 1;
+		game.quizStart = true;
 		// for loop below will be the whole of the quiz, each loop will be a question
 		for (const singleQuestion of results) {
 		// First create the message to send to user with the questions and answer choices
@@ -111,6 +122,9 @@ export async function execute(interaction) {
 
 
 		await findWinner(interaction, players);
+		game.commandCollector.stop('gameEnd');
+		game.quizEnd = true;
+		game.cleanEmitter();
 		currentGameChats.splice(currentGameChats.indexOf(interaction.channel.id), 1);
 	}
 	catch (error) {
