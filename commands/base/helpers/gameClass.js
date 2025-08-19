@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import util from 'util';
-import { sessionTokens, wait } from '../../util/reusableVars.js';
-import { MAX_TIME, PAUSE_TIME, SIX_HOURS, SMALL_DELAY } from '../../util/constants.js';
+import { sessionTokens } from '../../util/reusableVars.js';
+import { MAX_TIME, SIX_HOURS } from '../../util/constants.js';
 import { logger } from '../../../utility/logger.js';
 
 // or i can have this class extended EventEmitter
@@ -14,6 +14,7 @@ export class Game {
 		this.commandMessageCollection();
 		this.quizStart = false;
 		this.quizEnd = false;
+		this.quizPaused = false;
 	}
 
 	setCurrentInteraction(interaction) {
@@ -91,31 +92,38 @@ export class Game {
 		});
 
 		this.commandCollector.on('collect', async (msg) => {
-			console.log(msg.content);
-			console.log('quiz start', this.quizStart);
-			console.log('quiz end: ', this.quizEnd);
 			if (msg.content === 'start' && !this.quizStart) {
 				this.emitter.emit('startQuiz');
 			}
 			else if (msg.content === 'pause') {
-				// fix
-				await Promise.race([
-					new Promise(res => this.timer = setTimeout(async () => {
-						await msg.channel.send('# Game is starting!');
-						await wait(SMALL_DELAY);
-						res();
-					}, PAUSE_TIME)),
-				]);
+				if (!this.quizPaused) {
+					this.quizPaused = true;
+					msg.channel.send('⏸️ Game paused.');
+					this.emitter.emit('pause');
+				}
 			}
 			else if (msg.content === 'unpause') {
-				// fix
-				clearTimeout(this.timer);
+				if (this.quizPaused) {
+					this.quizPaused = false;
+					msg.channel.send('▶️ Game resumed.');
+					this.emitter.emit('unpause');
+				}
 			}
 			else if (msg.content === 'end') {
-				// fix
 				this.emitter.emit('endQuiz');
 				this.quizEnd = true;
 			}
 		});
+	}
+
+	async waitWhilePaused() {
+		if (!this.quizPaused) return;
+
+		// Wait for unpause exactly once
+		await new Promise((resolve) => {
+			this.emitter.once('unpause', resolve);
+		});
+
+	// After resume, just exit
 	}
 };

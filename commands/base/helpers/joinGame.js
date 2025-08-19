@@ -31,11 +31,10 @@ export async function joinGame(interaction, game) {
 	});
 
 	// this will be used to keep track of everything that a player needs to have
-	const players = new Map();
-	players.set(interaction.user.id, { points: 0, answer: null });
+	game.players.set(interaction.user.id, { points: 0, answer: null });
 
 	const joinFilter = async (buttonInteraction) => {
-		if (!(players.has(buttonInteraction.user.id))) {
+		if (!(game.players.has(buttonInteraction.user.id))) {
 			return true;
 		}
 		await buttonInteraction.reply({
@@ -53,7 +52,7 @@ export async function joinGame(interaction, game) {
 	});
 
 	joinButtonCollector.on('collect', async (buttonInteraction) => {
-		players.set(buttonInteraction.user.id, { points: 0, answer: null });
+		game.players.set(buttonInteraction.user.id, { points: 0, answer: null });
 		await buttonInteraction.reply({
 			content: 'You have joined the game!',
 			flags: MessageFlags.Ephemeral,
@@ -61,9 +60,9 @@ export async function joinGame(interaction, game) {
 	});
 
 	joinButtonCollector.on('end', async () => {
-		const message = await interaction.channel.send('Game is starting!');
-		setTimeout(() => message.delete(), 5_000);
+		if (!game.quizStart && !game.quizEnd && !game.quizPaused) {
+			const message = await interaction.channel.send('Game is starting!');
+			setTimeout(() => message.delete(), 5_000);
+		}
 	});
-
-	return players;
 }
