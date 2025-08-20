@@ -65,7 +65,7 @@ export async function execute(interaction) {
 		catch (error) {
 			logger.error(error);
 			logChalk.error(`${commandName} was not able to execute!`);
-			console.log(error);
+			console.error(error);
 			if (interaction.replied || interaction.deferred) {
 				await interaction.followUp({
 					content: 'There was an error while executing this command!',

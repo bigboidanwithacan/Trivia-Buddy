@@ -16,7 +16,7 @@ export const joinedMessages = Object.freeze([
 export const PAUSE_TIME = 60_000;
 export const START_WAIT = 30_000;
 export const ROUND_WAIT = 20_000;
-export const ROUND_BUFFER = 15_000;
+export const ROUND_BUFFER = 10_000;
 export const MAX_PLAYERS = 8;
 // used to make game feel a lil smoother imo
 export const SMALL_DELAY = 1_000;

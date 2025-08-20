@@ -70,7 +70,7 @@ export async function runGame(game) {
 			await clearTimeout(timer);
 			game.cleanEmitter();
 
-			if (results.length === questionCounter || game.foundWinner === true) {
+			if (results.length === questionCounter || game.foundWinner === true || (game.options.maxPoints !== null && findTopScore(game) >= game.options.maxPoints)) {
 				await wait(SMALL_DELAY / 2);
 				await game.interaction.channel.send('# Game over!');
 				await wait(SMALL_DELAY / 2);
@@ -86,6 +86,7 @@ export async function runGame(game) {
 			await wait (SMALL_DELAY);
 			await showMessageTimer(game.interaction, (ROUND_BUFFER - 1_000), `## Time until round ${questionCounter} starts`);
 			await showLeaderboard(game.interaction, game.players);
+			game.emitter.removeAllListeners('endQuiz');
 		}
 		await findWinner(game.interaction, game.players);
 		game.commandCollector.stop('gameEnd');
@@ -103,4 +104,13 @@ export async function runGame(game) {
 		currentGameChats.splice(currentGameChats.indexOf(game.interaction.channel.id), 1);
 		return;
 	}
+}
+
+function findTopScore(game) {
+	const positions = [];
+	for (const player of game.players.keys()) {
+		positions.push({ id: player, points: game.players.get(player).points });
+	}
+	positions.sort((a, b) => b.points - a.points);
+	return positions[0].points;
 }

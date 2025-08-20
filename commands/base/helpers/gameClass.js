@@ -40,13 +40,13 @@ export class Game {
 		this.question = question;
 	}
 
-	setCurrentGameOptions(amount, category, difficulty, type, end_on_points) {
+	setCurrentGameOptions(amount, category, difficulty, type, maxPossiblePoints) {
 		this.options = {
 			amount: amount,
 			category: category,
 			difficulty: difficulty,
 			type: type,
-			maxPointsEndGame: end_on_points,
+			maxPoints: maxPossiblePoints,
 		};
 	}
 
