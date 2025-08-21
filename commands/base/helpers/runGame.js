@@ -17,12 +17,7 @@ export async function runGame(game) {
 	currentGameChats.push(game.interaction.channel.id);
 
 	try {
-		// when adding options add variables to pass into the APICall() function
-		const { query, endGameOnPoints } = await extractOptions(game.interaction, game);
-		if (endGameOnPoints === true) {
-		// the game should now go to max points not till the last question
-		// TO-DO
-		}
+		const { query } = await extractOptions(game.interaction, game);
 		const results = await APICall(game.interaction, query);
 		if (results === null || results === undefined) {
 			game.interaction.editReply({

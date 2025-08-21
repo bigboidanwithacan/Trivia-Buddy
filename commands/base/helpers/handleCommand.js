@@ -94,7 +94,6 @@ export async function extractOptions(interaction, game) {
 	if (amount !== null) query = `amount=${amount}`;
 	else query = 'amount=5';
 	const definedAmount = amount ?? 5;
-	// https://opentdb.com/api.php?amount=10&category=9&difficulty=easy&type=multiple
 	const category = interaction.options.getString('category');
 	if (category !== null) {
 		// resolves the promise since categoryToId is technically a promise.
@@ -118,5 +117,5 @@ export async function extractOptions(interaction, game) {
 	query += `&token=${game.sessionToken}`;
 	game.setCurrentGameOptions(definedAmount, category, difficulty, type, endGameOnPoints);
 
-	return { query, endGameOnPoints };
+	return { query };
 }
