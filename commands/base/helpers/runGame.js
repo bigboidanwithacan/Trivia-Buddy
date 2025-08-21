@@ -77,7 +77,7 @@ export async function runGame(game) {
 			]);
 			await clearTimeout(timer);
 
-			if (results.length === questionCounter || game.foundWinner === true || (game.options.maxPoints !== null && findTopScore(game) >= game.options.maxPoints)) {
+			if (results.length === questionCounter || game.quizEnd || (game.options.maxPoints !== null && findTopScore(game) >= game.options.maxPoints)) {
 				await wait(SMALL_DELAY / 2);
 				await game.interaction.channel.send('# Game over!');
 				await wait(SMALL_DELAY / 2);

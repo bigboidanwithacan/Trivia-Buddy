@@ -20,7 +20,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.14.0 # Or your preferred pnpm version
+          version: 10.15.0 # Or your preferred pnpm version
           run_install: false
 
       - name: Use Node.js ${{ matrix.node-version }}
