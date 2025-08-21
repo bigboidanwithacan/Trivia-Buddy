@@ -1,8 +1,12 @@
 /*
 // MADE GOOD PROGRESS SO FAR
 // 	TO-DO
-//		MAKE SOME OF THE MESSAGES DISPLAY COMPONENTS OR EMBEDS (optional)
-//			FOR EXAMPLE THE WINNER TEXT CAN BE A DISPLAY COMPONENT THAT HAS MARKDOWN TO MAKE IT LARGE OR SOMETHING LIKE THAT
+//		GO THROUGH ALL FILES AND SEE IF ANY CHANGES CAN BE MADE USING THE GAME CLASS INSTANCE I CALL IN THIS FILE
+//			FOR EXAMPLE PASSING THE GAME INSTANCE TO A FUNCTION CALL TO MAKE SOMETHING EASIER
+
+//		CHECK TO SEE IF I CAN CONVERT THE QUESTION EMBED TO A DISPLAY COMPONENT
+
+//		CHECK TO SEE IF MORE OR LESS DELAYS ARE NEEDED IN ALL PARTS OF THE GAME INDIVIDUALLY
 */
 
 import { MessageFlags } from 'discord.js';
@@ -10,7 +14,6 @@ import { currentGameChats } from '../util/reusableVars.js';
 import { commandDefinition } from './helpers/handleCommand.js';
 import { Game } from './helpers/gameClass.js';
 import { runGame } from './helpers/runGame.js';
-// import { once } from 'events';
 
 
 export const data = commandDefinition;
@@ -26,9 +29,6 @@ export async function execute(interaction) {
 		return;
 	}
 	await interaction.deferReply();
-	// TO-DO
-	// from this and below call runGame.js function and encapsulate the code below into that function
-	// then i can have a promise race between the function in runGame.js finishing first or an event listener that listens for the 'endQuiz' event
 	const game = new Game(interaction);
 	Promise.race([
 		runGame(game),
@@ -39,10 +39,5 @@ export async function execute(interaction) {
 			});
 		}),
 	]);
-
-	if (game.quizEnd) {
-		return;
-	}
-
 
 }
