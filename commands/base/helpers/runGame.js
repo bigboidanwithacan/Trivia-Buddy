@@ -33,20 +33,24 @@ export async function runGame(game) {
 		}
 		await joinGame(game.interaction, game);
 
+		const controller = new AbortController();
 		await Promise.race([
 			new Promise(res => {
 				setTimeout(() => {
 					res();
 				}, START_WAIT + 500);
 			}),
-			once(game.emitter, 'startQuiz'),
-			once(game.emitter, 'endQuiz'),
+			once(game.emitter, 'startQuiz', { signal: controller.signal }),
+			once(game.emitter, 'endQuiz', { signal: controller.signal }),
 		]);
+
+		await controller.abort();
 
 		let questionCounter = 1;
 		game.quizStart = true;
 		// for loop below will be the whole of the quiz, each loop will be a question
 		for (const singleQuestion of results) {
+			const roundController = new AbortController();
 			await game.waitWhilePaused();
 			if (game.quizEnd) break;
 			// First create the message to send to user with the questions and answer choices
@@ -57,18 +61,21 @@ export async function runGame(game) {
 			// wait here until either a user answers something right or until the timer runs out
 			let timer = null;
 			await Promise.race([
-				once(game.emitter, 'correctAnswer'),
+				once(game.emitter, 'correctAnswer', { signal: roundController.signal }),
 				new Promise(res => timer = setTimeout(async () => {
 				// announce no one got the question right, and then make correct answer button red
 					disableButton(message, ButtonStyle.Danger);
 					await game.interaction.channel.send('### Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
 					res();
 				}, ROUND_WAIT)),
-				once(game.emitter, 'allAnswered'),
-				once(game.emitter, 'endQuiz'),
+				once(game.emitter, 'allAnswered', { signal: roundController.signal }),
+				new Promise(res => {
+					if (game.quizEnd) {
+						res();
+					}
+				}),
 			]);
 			await clearTimeout(timer);
-			game.cleanEmitter();
 
 			if (results.length === questionCounter || game.foundWinner === true || (game.options.maxPoints !== null && findTopScore(game) >= game.options.maxPoints)) {
 				await wait(SMALL_DELAY / 2);
@@ -86,10 +93,10 @@ export async function runGame(game) {
 			await wait (SMALL_DELAY);
 			await showMessageTimer(game.interaction, (ROUND_BUFFER - 1_000), `## Time until round ${questionCounter} starts`);
 			await showLeaderboard(game.interaction, game.players);
-			game.emitter.removeAllListeners('endQuiz');
+			await roundController.abort();
 		}
 		await findWinner(game.interaction, game.players);
-		game.commandCollector.stop('gameEnd');
+		game.commandCollector.stop('The game has ended');
 		game.quizEnd = true;
 		game.cleanEmitter();
 		currentGameChats.splice(currentGameChats.indexOf(game.interaction.channel.id), 1);

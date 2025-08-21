@@ -25,15 +25,16 @@ export class Game {
 	// look in notion for extra detail and don't forget to check the guide on classes
 
 	cleanEmitter() {
-		if (this.quizEnd) {
-			this.emitter.removeAllListeners();
-			return;
-		}
-		if (this.quizStart) {
-			this.emitter.removeAllListeners('startQuiz');
-		}
-		this.emitter.removeAllListeners('correctAnswer');
-		this.emitter.removeAllListeners('allAnswered');
+		// if (this.quizEnd) {
+		// 	this.emitter.removeAllListeners();
+		// 	return;
+		// }
+		// if (this.quizStart) {
+		// 	this.emitter.removeAllListeners('startQuiz');
+		// }
+		// this.emitter.removeAllListeners('correctAnswer');
+		// this.emitter.removeAllListeners('allAnswered');
+		this.emitter.removeAllListeners();
 	}
 
 	setCurrentQuestion(question) {
