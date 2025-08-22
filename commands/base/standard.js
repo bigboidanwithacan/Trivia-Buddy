@@ -1,21 +1,23 @@
 /*
 // MADE GOOD PROGRESS SO FAR
 // 	TO-DO
-//		GO THROUGH ALL FILES AND SEE IF ANY CHANGES CAN BE MADE USING THE GAME CLASS INSTANCE I CALL IN THIS FILE
-//			FOR EXAMPLE PASSING THE GAME INSTANCE TO A FUNCTION CALL TO MAKE SOMETHING EASIER
+// 		FIX LEADERBOARD ISSUE (HAVE IT SKIP POSITIONS IF TIED EXAMPLE BELOW)
+//			1 ARC: 2 POINTS
+//  		1 DIL: 2 POINTS
+// 			3 DAN: 1 POINTS  // THIS ONE HERE IS THE KEY IT WOULD BE POSITION 2 WITH THE WAY IM DOING THINGS RN
 
 */
 
 import { MessageFlags } from 'discord.js';
 import { currentGameChats } from '../util/reusableVars.js';
-import { commandDefinition } from './helpers/handleCommand.js';
+import { commandDefinition } from './helpers/commandHandling.js';
 import { Game } from './helpers/gameClass.js';
 import { runGame } from './helpers/runGame.js';
 
 
 export const data = commandDefinition;
 
-export { autocomplete } from './helpers/handleCommand.js';
+export { autocomplete } from './helpers/commandHandling.js';
 
 export async function execute(interaction) {
 	if (currentGameChats.find(id => id === interaction.channel.id)) {

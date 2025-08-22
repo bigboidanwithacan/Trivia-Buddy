@@ -2,7 +2,7 @@ import { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentTy
 import { ROUND_BUFFER } from '../../util/constants.js';
 import { wait } from '../../util/reusableVars.js';
 
-export async function showLeaderboard(interaction, players) {
+export async function showLeaderboard(game) {
 	const leaderboardButton = new ButtonBuilder()
 		.setCustomId('roundLeaderButton')
 		.setLabel('Leaderboard')
@@ -11,7 +11,7 @@ export async function showLeaderboard(interaction, players) {
 	const leaderRow = new ActionRowBuilder()
 		.setComponents([leaderboardButton]);
 
-	const leaderboardMessage = await interaction.channel.send({
+	const leaderboardMessage = await game.interaction.channel.send({
 		content: 'Click the button below to see the leaderboard and your place!',
 		components: [leaderRow],
 	});
@@ -20,7 +20,7 @@ export async function showLeaderboard(interaction, players) {
 
 	leaderboardCollector.on('collect', async (buttonInteraction) => {
 		// respond to this and make an ephemeral message with an embed that shows leaderboard
-		await leaderboardOutput(players, 3, buttonInteraction, true);
+		await leaderboardOutput(game.players, 3, buttonInteraction, true);
 	});
 
 	await wait(ROUND_BUFFER);
@@ -53,7 +53,8 @@ export async function leaderboardOutput(playersMap, maxPosition, interaction, ep
 	// also ephemeral leaderboards are only when someone clicks a button so it will output their position if they are in the game but not in the top how every many positions the leaderboard shows
 	if (ephemeralBoolean) {
 		if (!foundMyself && playersMap.has(interaction.user.id)) {
-			embed.addFields({ name: `#${positions.indexOf({ id: interaction.user.id })}`, value: `<@${interaction.user.id}> with ${playersMap.get(interaction.user.id).points}` });
+			console.log(positions);
+			embed.addFields({ name: `#${positions.findIndex(pos => pos.id === interaction.user.id) + 1}`, value: `<@${interaction.user.id}> with ${playersMap.get(interaction.user.id).points}` });
 		}
 		await interaction.reply({
 			embeds: [embed],

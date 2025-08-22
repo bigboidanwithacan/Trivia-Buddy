@@ -1,6 +1,6 @@
 import { MessageFlags, ButtonStyle } from 'discord.js';
 import { currentGameChats, wait } from '../../util/reusableVars.js';
-import { extractOptions } from './handleCommand.js';
+import { extractOptions } from './commandHandling.js';
 import { once } from 'events';
 import { START_WAIT, ROUND_WAIT, ROUND_BUFFER, SMALL_DELAY, REGULAR_DELAY } from './../../util/constants.js';
 import { showLeaderboard } from './showLeaderboard.js';
@@ -50,8 +50,9 @@ export async function runGame(game) {
 			const roundController = new AbortController();
 			// First create the message to send to user with the questions and answer choices
 			// then handle the responses of the users to the questions
-			const message = await sendQuestion(game.interaction, singleQuestion, questionCounter);
-			await responseHandler(game, game.interaction, game.players, message);
+			game.setCurrentQuestion(singleQuestion);
+			const message = await sendQuestion(game, questionCounter);
+			await responseHandler(game, message);
 
 			// wait here until either a user answers correctly, until the timer runs out, or everyone gets the answer wrong
 			let timer = null;
@@ -60,7 +61,7 @@ export async function runGame(game) {
 				new Promise(res => timer = setTimeout(async () => {
 				// announce no one got the question right, and then make correct answer button red
 					disableButton(message, ButtonStyle.Danger);
-					await game.interaction.channel.send('### Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
+					await game.interaction.channel.send('### Times up! Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
 					res();
 				}, ROUND_WAIT)),
 				once(game.emitter, 'allAnswered', { signal: roundController.signal }),
@@ -86,8 +87,8 @@ export async function runGame(game) {
 				player.answer = null;
 			}
 			await wait (SMALL_DELAY);
-			await showMessageTimer(game.interaction, (ROUND_BUFFER - 1_000), `## Time until round ${questionCounter} starts`);
-			await showLeaderboard(game.interaction, game.players);
+			await showMessageTimer(game.interaction, (ROUND_BUFFER - SMALL_DELAY), `## Time until round ${questionCounter} starts`);
+			await showLeaderboard(game);
 			await roundController.abort();
 		}
 		await wait(SMALL_DELAY);

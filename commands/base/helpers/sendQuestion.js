@@ -3,8 +3,8 @@ import { capitalizeFirstLetter } from '../../util/capitalize.js';
 import { decode } from 'html-entities';
 import { ROUND_WAIT } from '../../util/constants.js';
 
-export async function sendQuestion(interaction, singleQuestion, questionCounter) {
-	const { type, difficulty, category, question, correct_answer, incorrect_answers } = singleQuestion;
+export async function sendQuestion(game, questionCounter) {
+	const { type, difficulty, category, question, correct_answer, incorrect_answers } = game.question;
 	const embed = new EmbedBuilder()
 		.setTitle(`Question ${questionCounter}`)
 		.setFooter({ text: 'Questions from the open trivia database', iconURL: 'https://opentdb.com/images/logo.png' })
@@ -70,7 +70,7 @@ export async function sendQuestion(interaction, singleQuestion, questionCounter)
 	// add buttons for answers and link it to this message
 	const now = Date.now();
 	const endRound = Math.round((now + ROUND_WAIT) / 1_000);
-	const message = await interaction.channel.send({ content: `<t:${endRound}:R> seconds the round is over`, embeds: [embed], components: [row] });
+	const message = await game.interaction.channel.send({ content: `<t:${endRound}:R> seconds the round is over`, embeds: [embed], components: [row] });
 
 	return message;
 }

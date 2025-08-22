@@ -1,76 +1,41 @@
-import { SlashCommandBuilder, ContainerBuilder, UserSelectMenuBuilder, ButtonStyle, MessageFlags, ComponentType, ButtonBuilder } from 'discord.js';
+// TESTING OUT CANVACORD DUE TO REQUEST TO MAKE A BETTER LEADERBOARD
+// THIS IS NOT AN MVP DESIGN, BUT RATHER A FEATURE REQUEST
+import { SlashCommandBuilder, AttachmentBuilder } from 'discord.js';
+import { Font, LeaderboardBuilder } from 'canvacord';
+
+Font.loadDefault();
 
 export const data = new SlashCommandBuilder()
 	.setName('test')
-	.setDescription('Command used to test whatever stuff');
+	.setDescription('Command used to test the leaderboard feature');
 
 export async function execute(interaction) {
-	// await interaction.reply('test!');
-	const exampleContainer = new ContainerBuilder()
-		.setAccentColor(0x0099FF)
-		.addTextDisplayComponents(
-			textDisplay => textDisplay
-				.setContent('This text is inside a Text Display component! You can use **any __markdown__** available inside this component too.'),
-		)
-		.addActionRowComponents(
-			actionRow => actionRow
-				.setComponents(
-					new UserSelectMenuBuilder()
-						.setCustomId('exampleSelect')
-						.setPlaceholder('Select users'),
-				),
-		)
-		.addActionRowComponents(
-			actionRow => actionRow
-				.addComponents(
-					new ButtonBuilder()
-						.setCustomId('testButton')
-						.setLabel('Test Button')
-						.setStyle(ButtonStyle.Success),
-				),
-		)
-		.addSeparatorComponents(
-			separator => separator,
-		)
-		.addSectionComponents(
-			section => section
-				.addTextDisplayComponents(
-					textDisplay => textDisplay
-						.setContent('# This text is inside a Text Display component! You can use **any __markdown__** available inside this component too.'),
-					textDisplay => textDisplay
-						.setContent('And you can place one button or one thumbnail component next to it!'),
-				)
-				.setButtonAccessory(
-					button => button
-						.setCustomId('exampleButton')
-						.setLabel('Button inside a Section')
-						.setStyle(ButtonStyle.Primary),
-				),
-		);
-	const response = await interaction.reply({
-		components: [exampleContainer],
-		flags: MessageFlags.IsComponentsV2,
-		withResponse: true,
-	});
-	const message = response.resource.message;
+	await interaction.deferReply();
 
-	const menuCollector = message.createMessageComponentCollector({
-		componentType: ComponentType.UserSelect,
-		time: 10_000,
+	const players = [
+		{ avatar: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/330px-PNG_transparency_demonstration_1.png', username: 'PlayerOne', displayName: 'Player One', level: 10, xp: 1500, rank: 1 },
+		{ avatar: 'https://images.rawpixel.com/image_png_800/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvam9iNjgwLTE2Ni1wLWwxZGJ1cTN2LnBuZw.png', username: 'PlayerTwo', displayName: 'Player Two', level: 9, xp: 1200, rank: 2 },
+		{ avatar: 'https://images.rawpixel.com/image_png_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTA4L3Jhd3BpeGVsb2ZmaWNlMl9kaWdpdGFsX3BhaW50X21pbmltYWxfaWxsdXN0cmF0aW9uX29mX2NsZWFuX2p1bl8wNzUzYTY0ZC03ZDYxLTRjZjItYmI4YS0wNGMzMjFhYjViYzBfMS5wbmc.png', username: 'PlayerThree', displayName: 'Player Three', level: 8, xp: 1000, rank: 3 },
+	];
+
+	const lb = new LeaderboardBuilder()
+		.setHeader({
+			title: 'Server Leaderboard',
+			image: 'https://cdn.pixabay.com/photo/2017/05/31/16/39/windows-2360920_1280.png',
+			subtitle: 'Top Players',
+		})
+		.setPlayers(players)
+		.setVariant('default');
+
+
+	const imageBuffer = await lb.build({ format: 'png' });
+	const attachment = new AttachmentBuilder(imageBuffer, {
+		name: 'leaderboard.png',
 	});
 
-	const buttonCollector = message.createMessageComponentCollector({
-		componentType: ComponentType.Button,
-		time: 15_000,
+	await interaction.editReply({
+		content: '**Leaderboard:**',
+		files: [attachment],
 	});
-
-	menuCollector.on('collect', async i => {
-		// console.log(i.values);
-		i.reply(`Hey <@${i.values[0]}>\n ${i.user} wanted to @ you for some reason`);
-	});
-
-	buttonCollector.on('collect', async i => {
-		i.reply(`Congrats ${i.user} knows how to click a button :middle_finger:`);
-	});
-
 }
+

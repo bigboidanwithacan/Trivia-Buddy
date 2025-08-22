@@ -17,10 +17,6 @@ export class Game {
 		this.quizPaused = false;
 	}
 
-	setCurrentInteraction(interaction) {
-		this.currentInteraction = interaction;
-	}
-
 	cleanEmitter() {
 		this.emitter.removeAllListeners();
 	}
