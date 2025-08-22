@@ -2,7 +2,7 @@ import { MessageFlags, ButtonStyle } from 'discord.js';
 import { currentGameChats, wait } from '../../util/reusableVars.js';
 import { extractOptions } from './commandHandling.js';
 import { once } from 'events';
-import { START_WAIT, ROUND_WAIT, ROUND_BUFFER, SMALL_DELAY, REGULAR_DELAY } from './../../util/constants.js';
+import { START_WAIT, ROUND_WAIT, ROUND_BUFFER, SMALL_DELAY, REGULAR_DELAY, categoryToId } from './../../util/constants.js';
 import { showLeaderboard } from './showLeaderboard.js';
 import { disableButton } from './disableButton.js';
 import { showMessageTimer } from './showMessageTimer.js';
@@ -18,12 +18,20 @@ export async function runGame(game) {
 
 	try {
 		const { query } = await extractOptions(game.interaction, game);
+		const category = await categoryToId;
+		if (game.options.category !== null && !category.find(c => c.category === game.options.category)) {
+			game.interaction.editReply('Invalid category selected. Please choose from the provided options.');
+			currentGameChats.splice(currentGameChats.indexOf(game.interaction.channel.id), 1);
+			game.emitter.removeAllListeners('endQuiz');
+			return;
+		}
 		const results = await APICall(game.interaction, query);
 		if (results === null || results === undefined) {
 			game.interaction.editReply({
 				content: 'Sorry we could not fetch questions at this time from [Open Trivia Database](https://opentdb.com/!)',
 			});
 			currentGameChats.splice(currentGameChats.indexOf(game.interaction.channel.id), 1);
+			game.emitter.removeAllListeners('endQuiz');
 			return;
 		}
 		await joinGame(game.interaction, game);
