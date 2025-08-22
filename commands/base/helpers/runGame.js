@@ -45,15 +45,15 @@ export async function runGame(game) {
 		game.quizStart = true;
 		// for loop below will be the whole of the quiz, each loop will be a question
 		for (const singleQuestion of results) {
-			const roundController = new AbortController();
 			await game.waitWhilePaused();
 			if (game.quizEnd) break;
+			const roundController = new AbortController();
 			// First create the message to send to user with the questions and answer choices
 			// then handle the responses of the users to the questions
 			const message = await sendQuestion(game.interaction, singleQuestion, questionCounter);
 			await responseHandler(game, game.interaction, game.players, message);
 
-			// wait here until either a user answers something right or until the timer runs out
+			// wait here until either a user answers something right, until the timer runs out, or everyone gets the answer wrong
 			let timer = null;
 			await Promise.race([
 				once(game.emitter, 'correctAnswer', { signal: roundController.signal }),

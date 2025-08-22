@@ -21,19 +21,7 @@ export class Game {
 		this.currentInteraction = interaction;
 	}
 
-	// setting and getting multiple things as well
-	// look in notion for extra detail and don't forget to check the guide on classes
-
 	cleanEmitter() {
-		// if (this.quizEnd) {
-		// 	this.emitter.removeAllListeners();
-		// 	return;
-		// }
-		// if (this.quizStart) {
-		// 	this.emitter.removeAllListeners('startQuiz');
-		// }
-		// this.emitter.removeAllListeners('correctAnswer');
-		// this.emitter.removeAllListeners('allAnswered');
 		this.emitter.removeAllListeners();
 	}
 
@@ -67,6 +55,7 @@ export class Game {
 			sessionTokens.set(channelId, json.token);
 			this.sessionToken = json.token;
 			setTimeout(() => {
+				logger.info(`Deleted session token for ${channelId} channel: ${json.token}`);
 				this.removeSessionToken(channelId);
 			}, SIX_HOURS);
 			logger.info(`New session token created for ${channelId} channel: ${json.token}`);
@@ -81,10 +70,6 @@ export class Game {
 	}
 
 	// waits for a command from the initiator of the game
-	// viable command include
-	// 		pause game -> pause
-	// 		end game early -> end
-	// 		start early -> start
 	commandMessageCollection() {
 		const messageFilter = (message) => message.author.id === this.interaction.user.id;
 		this.commandCollector = this.interaction.channel.createMessageCollector({
