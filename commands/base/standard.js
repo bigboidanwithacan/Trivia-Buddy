@@ -5,7 +5,15 @@
 //			1 ARC: 2 POINTS
 //  		1 DIL: 2 POINTS
 // 			3 DAN: 1 POINTS  // THIS ONE HERE IS THE KEY IT WOULD BE POSITION 2 WITH THE WAY IM DOING THINGS RN
+//		this should be done but test is required to check
 
+//		HANDLE ALL API CODES
+//			CODE 0 SUCCESS (LEAVE ALONE ALL G)
+//			CODE 1 NOT ENOUGH QUESTIONS FOR QUERY
+//			CODE 2 INVALID PARAMETER
+//			CODE 3 TOKEN NOT FOUND
+//			CODE 4 TOKEN EMPTY
+//			CODE 5 RATE LIMIT
 */
 
 import { MessageFlags } from 'discord.js';

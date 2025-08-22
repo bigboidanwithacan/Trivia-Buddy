@@ -37,16 +37,18 @@ export async function leaderboardOutput(playersMap, maxPosition, interaction, ep
 	}
 	let foundMyself = false;
 	positions.sort((a, b) => b.points - a.points);
-	let prevPoints = positions[0].points, playerCount = 0, playerPosition = 1;
+	let prevPoints = positions[0].points, playerCount = 0, playerPosition = 1, samePointPlayersInARow = 0;
 	for (const player of positions) {
 		if (playerCount === maxPosition) break;
-		if (prevPoints !== player.points) playerPosition++;
+		if (prevPoints === player.points && playerCount > 0) samePointPlayersInARow++;
+		else samePointPlayersInARow = 0;
 		prevPoints = player.points;
-		embed.addFields({ name: `#${playerPosition}`, value: `<@${player.id}> with ${player.points} points` });
+		embed.addFields({ name: `#${playerPosition - samePointPlayersInARow}`, value: `<@${player.id}> with ${player.points} points` });
 		if (player.id === interaction.user.id) {
 			foundMyself = true;
 		}
 		playerCount++;
+		playerPosition++;
 	}
 
 	// Ephemeral messages only allowed in replies and follow ups i believe
