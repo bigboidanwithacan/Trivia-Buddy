@@ -33,7 +33,7 @@ export async function runGame(game) {
 			new Promise(res => {
 				setTimeout(() => {
 					res();
-				}, START_WAIT + 500);
+				}, START_WAIT + SMALL_DELAY);
 			}),
 			once(game.emitter, 'startQuiz', { signal: controller.signal }),
 			once(game.emitter, 'endQuiz', { signal: controller.signal }),
@@ -53,7 +53,7 @@ export async function runGame(game) {
 			const message = await sendQuestion(game.interaction, singleQuestion, questionCounter);
 			await responseHandler(game, game.interaction, game.players, message);
 
-			// wait here until either a user answers something right, until the timer runs out, or everyone gets the answer wrong
+			// wait here until either a user answers correctly, until the timer runs out, or everyone gets the answer wrong
 			let timer = null;
 			await Promise.race([
 				once(game.emitter, 'correctAnswer', { signal: roundController.signal }),
@@ -73,11 +73,11 @@ export async function runGame(game) {
 			await clearTimeout(timer);
 
 			if (results.length === questionCounter || game.quizEnd || (game.options.maxPoints !== null && findTopScore(game) >= game.options.maxPoints)) {
-				await wait(SMALL_DELAY / 2);
+				await wait(SMALL_DELAY);
 				await game.interaction.channel.send('# Game over!');
-				await wait(SMALL_DELAY / 2);
+				await wait(SMALL_DELAY);
 				const winnerMessage = await game.interaction.channel.send('### And the winner is...');
-				await wait(REGULAR_DELAY);
+				await wait(REGULAR_DELAY - SMALL_DELAY);
 				winnerMessage.delete();
 				break;
 			}
@@ -90,6 +90,7 @@ export async function runGame(game) {
 			await showLeaderboard(game.interaction, game.players);
 			await roundController.abort();
 		}
+		await wait(SMALL_DELAY);
 		await findWinner(game.interaction, game.players);
 		game.commandCollector.stop('The game has ended');
 		game.quizEnd = true;

@@ -58,7 +58,7 @@ const rest = new REST().setToken(config.token);
 					body: commands,
 				},
 			);
-			logChalk.info(`Successfully reloaded ${data.length} application (/) commands in the guild: ${guildId}.`);
+			logChalk.info(`Successfully reloaded ${data.length} application (/) commands in the guild: ${guildId}!`);
 		}
 
 		// const data = await rest.put(
@@ -67,7 +67,7 @@ const rest = new REST().setToken(config.token);
 		//         body: commands
 		//     },
 		// );
-		// logChalk.info(`Successfully reloaded ${data.length} application (/) commands.`);
+		// logChalk.info(`Successfully reloaded ${data.length} application (/) commands globally!`);
 
 	}
 	catch (error) {

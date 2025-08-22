@@ -25,22 +25,22 @@ export const commandDefinition = new SlashCommandBuilder()
 						{ name: 'Easy', value: 'easy' },
 						{ name: 'Medium', value: 'medium' },
 						{ name: 'Hard', value: 'hard' },
-						{ name: 'Any', value: ' ' },
+						{ name: 'Any', value: 'any' },
 					),
 			)
 			.addStringOption(option =>
 				option.setName('type')
-					.setDescription('The type of questions in the quiz (t/f or multiple choice)')
+					.setDescription('The type of questions in the quiz (t/f and/or multiple choice)')
 					.setChoices(
 						{ name: 'T/F', value: 'boolean' },
 						{ name: 'Multiple', value: 'multiple' },
-						{ name: 'Any', value: ' ' },
+						{ name: 'Any', value: 'any' },
 					),
 			),
 	)
 	.addSubcommand(subCommand =>
 		subCommand.setName('win_by_points')
-			.setDescription('Option to end game early when certain point amount is reached')
+			.setDescription('Option to end game early when certain point amount is reached. Max 8 players.')
 			.addIntegerOption(option => option.setName('max')
 				.setDescription('The point total to win the game!')
 				.setRequired(true)
@@ -64,16 +64,16 @@ export const commandDefinition = new SlashCommandBuilder()
 						{ name: 'Easy', value: 'easy' },
 						{ name: 'Medium', value: 'medium' },
 						{ name: 'Hard', value: 'hard' },
-						{ name: 'Any', value: ' ' },
+						{ name: 'Any', value: 'any' },
 					),
 			)
 			.addStringOption(option =>
 				option.setName('type')
-					.setDescription('The type of questions in the quiz (t/f or multiple choice)')
+					.setDescription('The type of questions in the quiz (t/f and/or multiple choice)')
 					.setChoices(
 						{ name: 'T/F', value: 'boolean' },
 						{ name: 'Multiple', value: 'multiple' },
-						{ name: 'Any', value: ' ' },
+						{ name: 'Any', value: 'any' },
 					),
 			),
 	);
@@ -103,10 +103,10 @@ export async function extractOptions(interaction, game) {
 	}
 
 	const difficulty = interaction.options.getString('difficulty');
-	if (difficulty !== null && difficulty !== ' ') query += `&difficulty=${difficulty}`;
+	if (difficulty !== null && difficulty !== 'any') query += `&difficulty=${difficulty}`;
 
 	const type = interaction.options.getString('type');
-	if (type !== null && type !== ' ') query += `&type=${type}`;
+	if (type !== null && type !== 'any') query += `&type=${type}`;
 
 	let endGameOnPoints = null;
 	if (interaction.options.getSubcommand() === 'win_by_points') {

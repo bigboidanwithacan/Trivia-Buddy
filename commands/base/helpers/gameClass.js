@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import util from 'util';
-import { sessionTokens } from '../../util/reusableVars.js';
-import { MAX_TIME, SIX_HOURS } from '../../util/constants.js';
+import { sessionTokens, wait } from '../../util/reusableVars.js';
+import { MAX_TIME, REGULAR_DELAY, SIX_HOURS } from '../../util/constants.js';
 import { logger } from '../../../utility/logger.js';
 
 // or i can have this class extended EventEmitter
@@ -50,6 +50,7 @@ export class Game {
 			const url = 'https://opentdb.com/api_token.php?command=request';
 			const response = await fetch(url).catch(error => {
 				console.error(error);
+				logger.error(error);
 			});
 			const json = await response.json();
 			sessionTokens.set(channelId, json.token);
@@ -109,6 +110,8 @@ export class Game {
 		await new Promise((resolve) => {
 			this.emitter.once('unpause', resolve);
 		});
+
+		await wait(REGULAR_DELAY);
 
 	// After resume, just exit
 	}
