@@ -2,7 +2,7 @@ import { MessageFlags, ButtonStyle } from 'discord.js';
 import { currentGameChats, wait } from '../../util/reusableVars.js';
 import { extractOptions } from './commandHandling.js';
 import { once } from 'events';
-import { START_WAIT, ROUND_WAIT, ROUND_BUFFER, SMALL_DELAY, REGULAR_DELAY, categoryToId } from './../../util/constants.js';
+import { START_WAIT, ROUND_WAIT, ROUND_BUFFER, SMALL_DELAY, REGULAR_DELAY, categoryToId, API_ERROR_MESSAGE } from './../../util/constants.js';
 import { showLeaderboard } from './showLeaderboard.js';
 import { disableButton } from './disableButton.js';
 import { showMessageTimer } from './showMessageTimer.js';
@@ -25,7 +25,14 @@ export async function runGame(game) {
 			game.emitter.removeAllListeners('endQuiz');
 			return;
 		}
-		const results = await APICall(game.interaction, query);
+		const results = await APICall(game, query);
+		if (typeof results === 'string') {
+			const message = await API_ERROR_MESSAGE;
+			game.interaction.editReply(message.find(err => err.name === results).message);
+			currentGameChats.splice(currentGameChats.indexOf(game.interaction.channel.id), 1);
+			game.emitter.removeAllListeners('endQuiz');
+			return;
+		}
 		if (results === null || results === undefined) {
 			game.interaction.editReply({
 				content: 'Sorry we could not fetch questions at this time from [Open Trivia Database](https://opentdb.com/!)',

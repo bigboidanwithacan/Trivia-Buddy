@@ -1,16 +1,3 @@
-/*
-// MADE GOOD PROGRESS SO FAR
-// 	TO-DO
-
-//		HANDLE ALL API CODES
-//			CODE 0 SUCCESS (LEAVE ALONE ALL G)
-//			CODE 1 NOT ENOUGH QUESTIONS FOR QUERY
-//			CODE 2 INVALID PARAMETER
-//			CODE 3 TOKEN NOT FOUND
-//			CODE 4 TOKEN EMPTY
-//			CODE 5 RATE LIMIT
-*/
-
 import { MessageFlags } from 'discord.js';
 import { currentGameChats } from '../util/reusableVars.js';
 import { commandDefinition } from './helpers/commandHandling.js';

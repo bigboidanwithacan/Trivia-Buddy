@@ -1,5 +1,5 @@
 import { ButtonBuilder, ActionRowBuilder, ButtonStyle, ComponentType, MessageFlags, EmbedBuilder } from 'discord.js';
-import { joinedMessages, MAX_PLAYERS, START_WAIT } from '../../util/constants.js';
+import { BIG_DELAY, joinedMessages, MAX_PLAYERS, START_WAIT } from '../../util/constants.js';
 
 export async function joinGame(interaction, game) {
 	const joinButton = new ButtonBuilder()
@@ -62,7 +62,7 @@ export async function joinGame(interaction, game) {
 	joinButtonCollector.on('end', async () => {
 		if (!game.quizStart && !game.quizEnd && !game.quizPaused) {
 			const message = await interaction.channel.send('Game is starting!');
-			setTimeout(() => message.delete(), 5_000);
+			setTimeout(() => message.delete(), BIG_DELAY);
 		}
 	});
 }

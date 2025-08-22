@@ -25,7 +25,14 @@ export const REGULAR_DELAY = 3_000;
 export const SIX_HOURS = 3_600_000;
 // there should be no games that are longer than 30 minutes (technically 33.3 minutes)
 export const MAX_TIME = 2_000_000;
+// Open TDB requires a 5 second delay
+export const BIG_DELAY = 5_000;
 
+export const API_ERROR_MESSAGE = deepFreeze([
+	{ name: 'err1', message: 'Sorry we do not currently have enough questions in this category!' },
+	{ name: 'err2', message: 'Sorry one of your parameters is invalid! Please try again with valid parameters!' },
+	{ name: 'err5', message: 'Request timed out! Please try again in 5 seconds!' },
+]);
 
 export const categoryNames = Object.freeze([
 	'General Knowledge',
