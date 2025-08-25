@@ -7,6 +7,11 @@ export const commandDefinition = new SlashCommandBuilder()
 	.addSubcommand(subCommand =>
 		subCommand.setName('default')
 			.setDescription('The default game mode where the game lasts until the last question no matter the point total')
+			.addBooleanOption(option =>
+				option.setName('teams')
+					.setDescription('True to play in teams, and false for solo game mode.')
+					.setRequired(true),
+			)
 			.addIntegerOption(option =>
 				option.setName('amount')
 					.setDescription('Amount of question to include in quiz')
@@ -41,6 +46,11 @@ export const commandDefinition = new SlashCommandBuilder()
 	.addSubcommand(subCommand =>
 		subCommand.setName('win_by_points')
 			.setDescription('Option to end game early when certain point amount is reached. Max 8 players.')
+			.addBooleanOption(option =>
+				option.setName('teams')
+					.setDescription('True to play in teams, and false for solo game mode.')
+					.setRequired(true),
+			)
 			.addIntegerOption(option => option.setName('max')
 				.setDescription('The point total to win the game!')
 				.setRequired(true)
@@ -113,9 +123,11 @@ export async function extractOptions(interaction, game) {
 		endGameOnPoints = interaction.options.getInteger('max');
 	}
 
+	const teams = interaction.options.getBoolean('teams');
+
 	await game.getSessionToken(interaction.channel.id);
 	query += `&token=${game.sessionToken}`;
-	game.setCurrentGameOptions(definedAmount, category, difficulty, type, endGameOnPoints);
+	game.setCurrentGameOptions(definedAmount, category, difficulty, type, endGameOnPoints, teams);
 
 	return { query };
 }

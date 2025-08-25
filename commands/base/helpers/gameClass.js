@@ -21,49 +21,11 @@ export class Game {
 		this.emitter.removeAllListeners();
 	}
 
-	setCurrentQuestion(question) {
-		this.question = question;
-	}
-
-	setCurrentGameOptions(amount, category, difficulty, type, maxPossiblePoints) {
-		this.options = {
-			amount: amount,
-			category: category,
-			difficulty: difficulty,
-			type: type,
-			maxPoints: maxPossiblePoints,
-		};
-	}
-
-	// for debugging
-	outputAllMembers() {
-		console.log(util.inspect(this, { showHidden: false, depth: null, colors: true }));
-	}
-
-	// the function i will use to get session tokens for games. these session tokens will only apply to a single channel
-	async getSessionToken(channelId) {
-		if (!sessionTokens.has(channelId)) {
-			const url = 'https://opentdb.com/api_token.php?command=request';
-			const response = await fetch(url).catch(error => {
-				console.error(error);
-				logger.error(error);
-			});
-			const json = await response.json();
-			sessionTokens.set(channelId, json.token);
-			this.sessionToken = json.token;
-			setTimeout(() => {
-				logger.info(`Deleted session token for ${channelId} channel: ${json.token}`);
-				this.removeSessionToken(channelId);
-			}, SIX_HOURS);
-			logger.info(`New session token created for ${channelId} channel: ${json.token}`);
-			return;
+	createTeams(amount) {
+		this.teams = new Map();
+		for (let i = 0; i < amount; i++) {
+			this.teams.set(i + 1, { playerId: null, points: null });
 		}
-		this.sessionToken = sessionTokens.get(channelId);
-	}
-
-	removeSessionToken(channelId) {
-		logger.info(`Deleting session token of channel ${channelId}`);
-		sessionTokens.delete(channelId);
 	}
 
 	// waits for a command from the initiator of the game
@@ -97,6 +59,52 @@ export class Game {
 				this.quizEnd = true;
 			}
 		});
+	}
+
+	// the function i will use to get session tokens for games. these session tokens will only apply to a single channel
+	async getSessionToken(channelId) {
+		if (!sessionTokens.has(channelId)) {
+			const url = 'https://opentdb.com/api_token.php?command=request';
+			const response = await fetch(url).catch(error => {
+				console.error(error);
+				logger.error(error);
+			});
+			const json = await response.json();
+			sessionTokens.set(channelId, json.token);
+			this.sessionToken = json.token;
+			setTimeout(() => {
+				logger.info(`Deleted session token for ${channelId} channel: ${json.token}`);
+				this.removeSessionToken(channelId);
+			}, SIX_HOURS);
+			logger.info(`New session token created for ${channelId} channel: ${json.token}`);
+			return;
+		}
+		this.sessionToken = sessionTokens.get(channelId);
+	}
+
+	// for debugging
+	outputAllMembers() {
+		console.log(util.inspect(this, { showHidden: false, depth: null, colors: true }));
+	}
+
+	removeSessionToken(channelId) {
+		logger.info(`Deleting session token of channel ${channelId}`);
+		sessionTokens.delete(channelId);
+	}
+
+	setCurrentGameOptions(amount, category, difficulty, type, maxPossiblePoints, teams) {
+		this.options = {
+			amount: amount,
+			category: category,
+			difficulty: difficulty,
+			type: type,
+			maxPoints: maxPossiblePoints,
+			teams: teams,
+		};
+	}
+
+	setCurrentQuestion(question) {
+		this.question = question;
 	}
 
 	async waitWhilePaused() {

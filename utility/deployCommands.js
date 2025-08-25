@@ -62,9 +62,9 @@ const rest = new REST().setToken(config.token);
 		}
 
 		// const data = await rest.put(
-		//     Routes.applicationCommands(clientId),
+		//     Routes.applicationCommands(config.clientId),
 		//     {
-		//         body: commands
+		//         body: [],
 		//     },
 		// );
 		// logChalk.info(`Successfully reloaded ${data.length} application (/) commands globally!`);
