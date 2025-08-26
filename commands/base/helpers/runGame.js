@@ -12,6 +12,7 @@ import { joinGame } from './joinGame.js';
 import { responseHandler } from './responseHandling.js';
 import { findWinner } from './findWinner.js';
 import { logger } from '../../../utility/logger.js';
+import { teamCreate } from './teamHandling.js';
 
 export async function runGame(game) {
 	currentGameChats.push(game.interaction.channel.id);
@@ -41,6 +42,7 @@ export async function runGame(game) {
 			game.emitter.removeAllListeners('endQuiz');
 			return;
 		}
+		await teamCreate(game);
 		await joinGame(game.interaction, game);
 
 		const controller = new AbortController();
