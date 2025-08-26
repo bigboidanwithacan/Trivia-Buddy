@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ComponentType, MessageFlags, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, MessageFlags, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
 import { ROUND_WAIT } from '../../util/constants.js';
 
 export async function teamCreate(game) {
@@ -20,12 +20,11 @@ export async function teamCreate(game) {
 				.setValue('4'),
 		);
 
-	const row = new ActionRowBuilder()
+	const selectRow = new ActionRowBuilder()
 		.setComponents(menu);
-	const message = await game.interaction.editReply({
+	const message = await game.interaction.channel.send({
 		content: 'How many teams do you want in the game?',
-		components: [row],
-		withReply: true,
+		components: [selectRow],
 	});
 
 	// console.log(message.components[0].components[0].toJSON());
@@ -48,14 +47,70 @@ export async function teamCreate(game) {
 			max: 1,
 		});
 
-		teamCollector.on('collect', interaction => {
-			game.options.teams = interaction.values[0];
-
+		teamCollector.on('collect', menuInteraction => {
+			game.options.teams = menuInteraction.values[0];
+			game.createTeams(menuInteraction.values[0]);
 		});
 
 		teamCollector.on('end', async () => {
-			await game.interaction.editReply({ components: [] });
+			await game.interaction.deleteReply(message);
+			await joinTeams(game);
 			res();
 		});
+	});
+}
+
+async function joinTeams(game) {
+	const buttonRow = new ActionRowBuilder();
+	for (let i = 0; i < game.options.teams; i++) {
+		const tempButton = new ButtonBuilder()
+			.setCustomId(`team${i + 1}`)
+			.setLabel(`Team ${i + 1}`)
+			.setStyle(ButtonStyle.Primary);
+
+		buttonRow.addComponents(tempButton);
+	}
+
+	const selectTeamMessage = await game.interaction.channel.send({
+		content: 'Join your preferred team!',
+		components: [buttonRow],
+	});
+
+	return new Promise((res) => {
+		const filter = interaction => {
+			if (game.players.has(interaction.user.id)) {
+				return true;
+			}
+			interaction.reply({
+				content: 'You have not joined the game, so you can\'t join a team!',
+				flags: MessageFlags.Ephemeral,
+			});
+			return false;
+		};
+
+		const collector = selectTeamMessage.createMessageComponentCollector({
+			filter: filter,
+			componentType: ComponentType.Button,
+			time: ROUND_WAIT,
+		});
+
+		let disabledButtons = 0, joinedTeam = 0;
+		collector.on('collect', async (buttonInteraction) => {
+			game.teams.get(buttonInteraction.customId).push(buttonInteraction.user.id);
+
+			joinedTeam++;
+			if (teamArray.length === (Math.ceil(game.players.size / game.options.teams) + 1)) {
+				// disable specific button
+				disabledButtons++;
+				if (disabledButtons === game.options.teams || joinedTeam === game.players.size) {
+					collector.stop('Everyone has joined the match!');
+				}
+			}
+		});
+
+		collector.on('end', () => {
+			res();
+		});
+
 	});
 }

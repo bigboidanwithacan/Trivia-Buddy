@@ -24,7 +24,8 @@ export class Game {
 	createTeams(amount) {
 		this.teams = new Map();
 		for (let i = 0; i < amount; i++) {
-			this.teams.set(i + 1, { playerId: null, points: null });
+			this.teams.set(`team${i + 1}`, new Array);
+			this.teams.get(`team${i + 1}`).push(0);
 		}
 	}
 
