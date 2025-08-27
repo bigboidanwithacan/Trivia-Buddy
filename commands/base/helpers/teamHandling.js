@@ -1,8 +1,19 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, MessageFlags, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
-import { ROUND_WAIT } from '../../util/constants.js';
+import { REGULAR_DELAY, ROUND_WAIT, BIG_DELAY } from '../../util/constants.js';
 
 export async function teamCreate(game) {
-	if (!game.options.teams) return;
+	if (!game.options.teams) {
+		if (!game.quizStart && !game.quizEnd && !game.quizPaused) {
+			const message = await game.interaction.channel.send('Game is starting!');
+			setTimeout(() => message.delete(), BIG_DELAY);
+			await new Promise((resolve) => {
+				setTimeout(() => {
+					resolve();
+				}, REGULAR_DELAY);
+			});
+		}
+		return;
+	}
 	const menu = new StringSelectMenuBuilder()
 		.setCustomId('team_selection_menu')
 		.addOptions(
@@ -26,8 +37,6 @@ export async function teamCreate(game) {
 		content: 'How many teams do you want in the game?',
 		components: [selectRow],
 	});
-
-	// console.log(message.components[0].components[0].toJSON());
 
 	return new Promise((res) => {
 		const messageFilter = interaction => {
@@ -53,7 +62,7 @@ export async function teamCreate(game) {
 		});
 
 		teamCollector.on('end', async () => {
-			await game.interaction.deleteReply(message);
+			await message.delete();
 			await joinTeams(game);
 			res();
 		});
@@ -94,21 +103,50 @@ async function joinTeams(game) {
 			time: ROUND_WAIT,
 		});
 
+		console.log(selectTeamMessage.components[0].components);
+
 		let disabledButtons = 0, joinedTeam = 0;
 		collector.on('collect', async (buttonInteraction) => {
 			game.teams.get(buttonInteraction.customId).push(buttonInteraction.user.id);
-
+			const teamArray = game.teams.get(buttonInteraction.customId);
+			console.log(buttonInteraction.component);
+			await buttonInteraction.reply({
+				content: `You have joined ${buttonInteraction.component.data.label}`,
+				flags: MessageFlags.Ephemeral,
+			});
 			joinedTeam++;
-			if (teamArray.length === (Math.ceil(game.players.size / game.options.teams) + 1)) {
+			console.log(teamArray);
+			console.log('array length', teamArray.length - 1);
+			console.log(`The formula and result: ⌈${game.players.size} / ${game.options.teams}⌉ = `, (Math.ceil(game.players.size / game.options.teams)));
+			if ((teamArray.length - 1) >= (Math.ceil(game.players.size / game.options.teams))) {
 				// disable specific button
-				disabledButtons++;
-				if (disabledButtons === game.options.teams || joinedTeam === game.players.size) {
-					collector.stop('Everyone has joined the match!');
+				const newRow = new ActionRowBuilder();
+				for (const button of selectTeamMessage.components[0].components) {
+					const tempButton = new ButtonBuilder(button.toJSON());
+					if (button.data.custom_id === buttonInteraction.customId) {
+						tempButton.setDisabled(true);
+					}
+					newRow.addComponents(tempButton);
 				}
+				selectTeamMessage.edit({ content: 'Join your preferred team!', components: [newRow] });
+				disabledButtons++;
+			}
+			if (disabledButtons === game.options.teams || joinedTeam === game.players.size) {
+				collector.stop('Everyone has joined the match!');
 			}
 		});
 
-		collector.on('end', () => {
+		collector.on('end', async () => {
+			await selectTeamMessage.delete();
+			if (!game.quizStart && !game.quizEnd && !game.quizPaused) {
+				const message = await game.interaction.channel.send('Game is starting!');
+				setTimeout(() => message.delete(), BIG_DELAY);
+			}
+			await new Promise((resolve) => {
+				setTimeout(() => {
+					resolve();
+				}, REGULAR_DELAY);
+			});
 			res();
 		});
 
