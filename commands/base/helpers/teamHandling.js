@@ -33,8 +33,12 @@ export async function teamCreate(game) {
 
 	const selectRow = new ActionRowBuilder()
 		.setComponents(menu);
+
+	const now = Date.now();
+	const start = Math.floor((now + ROUND_WAIT) / 1_000);
+
 	const message = await game.interaction.channel.send({
-		content: 'How many teams do you want in the game?',
+		content: `How many teams do you want in the game? <t:${start}:R>`,
 		components: [selectRow],
 	});
 
@@ -80,8 +84,11 @@ async function joinTeams(game) {
 		buttonRow.addComponents(tempButton);
 	}
 
+	const now = Date.now();
+	const start = Math.floor((now + ROUND_WAIT) / 1_000);
+
 	const selectTeamMessage = await game.interaction.channel.send({
-		content: 'Join your preferred team!',
+		content: `Join your preferred team! <t:${start}:R>`,
 		components: [buttonRow],
 	});
 
@@ -128,7 +135,7 @@ async function joinTeams(game) {
 					}
 					newRow.addComponents(tempButton);
 				}
-				selectTeamMessage.edit({ content: 'Join your preferred team!', components: [newRow] });
+				await selectTeamMessage.edit({ content: `Join your preferred team! <t:${start}:R>`, components: [newRow] });
 				disabledButtons++;
 			}
 			if (disabledButtons === game.options.teams || joinedTeam === game.players.size) {
