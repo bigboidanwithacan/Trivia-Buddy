@@ -42,7 +42,8 @@ export async function runGame(game) {
 			game.emitter.removeAllListeners('endQuiz');
 			return;
 		}
-		await joinGame(game.interaction, game);
+		if (!game.options.teams) await joinGame(game.interaction, game);
+		else await teamCreate(game);
 
 		const controller = new AbortController();
 		await Promise.race([
@@ -56,7 +57,6 @@ export async function runGame(game) {
 		]);
 
 		await controller.abort();
-		await teamCreate(game);
 
 		let questionCounter = 1;
 		game.quizStart = true;
