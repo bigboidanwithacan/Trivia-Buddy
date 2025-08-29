@@ -109,7 +109,7 @@ async function joinTeams(game) {
 		let disabledButtons = 0, joinedTeam = 0;
 		collector.on('collect', async (buttonInteraction) => {
 			game.teams.get(buttonInteraction.customId).push(buttonInteraction.user.id);
-			game.players.set(buttonInteraction.user.id, { team: buttonInteraction.customId, answer: null, points: 0 });
+			game.players.set(buttonInteraction.user.id, { team: buttonInteraction.component.data.label, answer: null, points: 0 });
 			const teamArray = game.teams.get(buttonInteraction.customId);
 			await buttonInteraction.reply({
 				content: `You have joined ${buttonInteraction.component.data.label}`,

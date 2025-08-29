@@ -33,8 +33,14 @@ export async function responseHandler(game, message) {
 		game.players.get(buttonInteraction.user.id).answer = chosenButton;
 		if (buttonInteraction.customId === 'correct') {
 			disableButton(message, ButtonStyle.Success);
-			await buttonInteraction.reply(`### ${buttonInteraction.user} got the correct answer!`);
-			game.players.get(buttonInteraction.user.id).points += 1 * DifficultyMultiplier[message.embeds[0].fields.find(field => field.name === 'Difficulty').value];
+			if (!game.options.teams) {
+				await buttonInteraction.reply(`### ${buttonInteraction.user} got the correct answer!`);
+				game.players.get(buttonInteraction.user.id).points += 1 * DifficultyMultiplier[message.embeds[0].fields.find(field => field.name === 'Difficulty').value];
+			}
+			else {
+				await buttonInteraction.reply(`### ${game.players.get(buttonInteraction.user.id).team} got the correct answer!`);
+				game.teams.get(game.players.get(buttonInteraction.user.id).team)[0] += 1 * DifficultyMultiplier[message.embeds[0].fields.find(field => field.name === 'Difficulty').value];
+			}
 			await game.emitter.emit('correctAnswer');
 		}
 		else {
@@ -45,7 +51,12 @@ export async function responseHandler(game, message) {
 			// check if everyone has already answered if so move on from this round
 			if (Array.from(game.players.values()).every(player => player.answer !== null && player.answer !== undefined)) {
 				disableButton(message, ButtonStyle.Danger);
-				await game.interaction.channel.send('### Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
+				if (!game.options.teams) {
+					await game.interaction.channel.send('### Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
+				}
+				else {
+					await game.interaction.channel.send('### Unfortunately no team correctly answered the question! <:despair:1405388111114014720>');
+				}
 				await game.emitter.emit('allAnswered');
 			}
 		}

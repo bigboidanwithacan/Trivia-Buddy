@@ -78,7 +78,12 @@ export async function runGame(game) {
 				new Promise(res => timer = setTimeout(async () => {
 				// announce no one got the question right, and then make correct answer button red
 					disableButton(message, ButtonStyle.Danger);
-					await game.interaction.channel.send('### Times up! Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
+					if (!game.options.teams) {
+						await game.interaction.channel.send('### Times up! Unfortunately no one correctly answered the question! <:despair:1405388111114014720>');
+					}
+					else {
+						await game.interaction.channel.send('### Times up! Unfortunately no team correctly answered the question! <:despair:1405388111114014720>');
+					}
 					res();
 				}, ROUND_WAIT)),
 				once(game.emitter, 'allAnswered', { signal: roundController.signal }),
@@ -128,10 +133,20 @@ export async function runGame(game) {
 }
 
 function findTopScore(game) {
+	// solo games
 	const positions = [];
-	for (const player of game.players.keys()) {
-		positions.push({ id: player, points: game.players.get(player).points });
+	if (!game.options.teams) {
+		// for solo games
+		for (const player of game.players.keys()) {
+			positions.push(game.players.get(player).points);
+		}
 	}
-	positions.sort((a, b) => b.points - a.points);
-	return positions[0].points;
+	else {
+		// for team games
+		for (const team of game.teams.values()) {
+			positions.push(team[0]);
+		}
+	}
+	positions.sort((a, b) => b - a);
+	return positions[0];
 }
