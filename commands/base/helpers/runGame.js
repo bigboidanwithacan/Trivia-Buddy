@@ -114,7 +114,7 @@ export async function runGame(game) {
 			await roundController.abort();
 		}
 		await wait(SMALL_DELAY);
-		await findWinner(game.interaction, game.players);
+		await findWinner(game);
 		game.commandCollector.stop('The game has ended');
 		game.quizEnd = true;
 		game.cleanEmitter();
@@ -133,8 +133,8 @@ export async function runGame(game) {
 }
 
 function findTopScore(game) {
-	// solo games
 	const positions = [];
+	// solo games
 	if (!game.options.teams) {
 		// for solo games
 		for (const player of game.players.keys()) {
